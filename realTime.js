@@ -1,24 +1,9 @@
-var fs = require('fs');
-var contents = fs.readFileSync('C:\\Users\\emrbe\\OneDrive\\Documents\\GitHub\\key.js'.toString(), 'utf8').split('\n');
-const key             = contents[0]; // API Key
-const secret          = contents[1]; // API Private Key
-const KrakenClient    = require('kraken-api');
-const kraken          = new KrakenClient(key, secret);
-
-var store = {
-    testBalance: 50,
-    longPosition: false,
-    position: 0,
-    spread: 1,
-    bid: -1,
-    ask: -1,
-    buyPrice: 1,
-    min: Infinity,
-    pair: 'XRPUSD',
-    commission: 0,
-    counter: 0,
-    tradeHistory: [[],[]]
-};
+config = require('./config');
+store = require('./store');
+const KrakenClient = require('kraken-api');
+const key = config.key; // API Key
+const secret = config.secret; // API Private Key
+const kraken = new KrakenClient(key, secret);
 
 function historic() {
     pair = store.pair;
@@ -26,17 +11,13 @@ function historic() {
 }
 
 function trade() {
-
     var sellIncrease = 100 * (store.bid - store.buyPrice) / store.buyPrice;
     var buyIncrease = 100 * (store.ask - store.min) / store.min;
-
     if (!store.longPosition && buyIncrease >= 1)
         buy();
     else if (store.longPosition && sellIncrease >= 5)
         sell();
-        
-    console.log('Your current balance is ' + store.testBalance);
-    console.log('Your current position is ' + store.position);
+    console.log('Your current balance is ' + store.testBalance['USD'] + ' USD and ' + store.testBalance[`XRP`] + ' XRP');
 }
 
 function buy() {
@@ -47,28 +28,23 @@ function buy() {
 }
 
 function placeBuyOrder() {
-    commission = store.testBalance * 0.0015;
-    store.commission = store.commission + commission;
-    store.testBalance = store.testBalance - commission;
-    store.position = store.testBalance / store.ask;
-    store.testBalance = 0;
+    commission = store.testBalance['USD'] * 0.0015;
+    store.testBalance['USD'] = store.testBalance['USD'] - commission;
+    store.testBalance['XRP'] = store.testBalance['USD'] / store.ask;
+    store.testBalance['USD'] = 0;
     store.longPosition = true;
     store.buyPrice = store.ask;
-    store.tradeHistory[store.counter][0] = store.position;
-    store.tradeHistory[store.counter][1] = store.buyPrice;
-    store.tradeHistory[store.counter][2] = commission;
-    store.counter++;
+    var history = {'type' : 'buy', 'value' : store.buyPrice, 'commission' : commission, 'balance' : store.testBalance};
+    store.tradeHistory.push(history);
 }
 
 function placeSellOrder() {
-    commission = store.position * store.bid * 0.0015;
-    store.comission = store.commission + commission;
-    store.testBalance = store.position * store.bid - commission;
+    commission = store.testBalance['XRP'] * store.bid * 0.0015;
+    store.testBalance['USD'] = store.testBalance['XRP'] * store.bid - commission;
     store.longPosition = false;
-    store.tradeHistory[store.counter - 1][3] = store.bid;
-    store.tradeHistory[store.counter - 1][4] = commission;
-    store.tradeHistory[store.counter - 1][5] = store.testBalance - store.tradeHistory[store.counter -1][0] * store.tradeHistory[store.counter -1][1] - store.tradeHistory[store.counter -1][2];
-    store.position = 0;
+    var history = {'type' : 'sell', 'value' : store.bid, 'commission' : commission, 'balance' : store.testBalance};
+    store.tradeHistory.push(history);
+    store.testBalance['XRP'] = 0;
 }
 
 function sell() {

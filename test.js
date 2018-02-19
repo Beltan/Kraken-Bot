@@ -1,17 +1,9 @@
-var fs = require('fs');
-var contents = fs.readFileSync('C:\\Users\\emrbe\\OneDrive\\Documents\\GitHub\\key.js'.toString(), 'utf8').split('\n');
-const key             = contents[0]; // API Key
-const secret          = contents[1]; // API Private Key
-const KrakenClient    = require('kraken-api');
-const kraken          = new KrakenClient(key, secret);
-
-var store = {
-    pair: 'XRPUSD',
-    last: 10000,
-    historicCounter: 0,
-    matrix: [],
-    data: []
-};
+config = require('./config');
+store = require('./store');
+const KrakenClient = require('kraken-api');
+const key = config.key; // API Key
+const secret = config.secret; // API Private Key
+const kraken = new KrakenClient(key, secret);
 
 async function loop() {
     for (i = 0; i < 5; i++){
