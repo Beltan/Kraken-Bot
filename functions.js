@@ -1,14 +1,21 @@
 config = require('./config');
+const fs = require('fs');
 const KrakenClient = require('kraken-api');
 const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-exports.loop = async function() {
-    for (i = 0; i < 5; i++){
+exports.getHistoric = async function() {
+    store.last = fs.readFileSync('./LastID.csv');
+    for (k = 0; k < 5; k++){
         await functions.historic();
     }
     await functions.unify();
+    var pairName = store.pair + '.csv';
+    var lastID = 'LastID.csv';
+    store.data.unshift('');
+    await functions.write(pairName, store.data);
+    await functions.overwrite(lastID, store.last);
 }
     
 exports.historic = async function() {
@@ -18,8 +25,9 @@ exports.historic = async function() {
 }
     
 exports.printResultsHistoric = function(error, data) {
-    if(error != null)
+    if(error != null){
         console.log(error);
+    }
     else {
         store.last = data.result.last;
         store.matrix[store.historicCounter] = data.result.XXRPZUSD;
@@ -29,11 +37,19 @@ exports.printResultsHistoric = function(error, data) {
 }
     
 exports.unify = function() {
-    for (i = 0; i < store.matrix.length; i++){
+    for (i = store.data.length; i < store.matrix.length; i++){
         for (j = 0; j < 1000; j++){
             store.data[i * 1000 + j] = store.matrix[i][j][0];
         }
     }
+}
+
+exports.overwrite = function(fileName, data) {
+    fs.writeFileSync(fileName, data, 'binary');
+}
+
+exports.write = function(fileName, data) {
+    fs.appendFileSync(fileName, data, 'binary');
 }
 
 exports.historicInit = function() {
