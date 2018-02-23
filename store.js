@@ -9,7 +9,5 @@ module.exports = {
     pair: 'XRPUSD',
     tradeHistory: [],
     last: 10000,
-    historicCounter: 0,
-    matrix: [],
     data: []
 }

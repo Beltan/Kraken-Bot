@@ -5,17 +5,12 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-exports.getHistoric = async function() {
-    store.last = fs.readFileSync('./LastID.csv');
-    for (k = 0; k < 5; k++){
-        await functions.historic();
+exports.getHistoric = async function(pair) {
+    store.pair = pair;
+    if (fs.existsSync('./LastID.txt')){
+        store.last = fs.readFileSync('./LastID.txt', 'utf8');
     }
-    await functions.unify();
-    var pairName = store.pair + '.csv';
-    var lastID = 'LastID.csv';
-    store.data.unshift('');
-    await functions.write(pairName, store.data);
-    await functions.overwrite(lastID, store.last);
+    await functions.historic();
 }
     
 exports.historic = async function() {
@@ -23,24 +18,24 @@ exports.historic = async function() {
     since = store.last;
     await kraken.api('Trades', {pair, since}, functions.printResultsHistoric);
 }
-    
+
 exports.printResultsHistoric = function(error, data) {
     if(error != null){
         console.log(error);
     }
     else {
         store.last = data.result.last;
-        store.matrix[store.historicCounter] = data.result.XXRPZUSD;
-        store.historicCounter++;
-        console.log(store.historicCounter);
-    }
-}
-    
-exports.unify = function() {
-    for (i = store.data.length; i < store.matrix.length; i++){
-        for (j = 0; j < 1000; j++){
-            store.data[i * 1000 + j] = store.matrix[i][j][0];
+        var tempData = [];
+        tempData = data.result.XXRPZUSD;
+        for (m = 0; m < tempData.length; m++){
+            tempData[m] = tempData[m][0];
         }
+        tempData.unshift('');
+        var pairName = store.pair + '.csv';
+        var lastID = 'LastID.txt';
+        functions.write(pairName, tempData);
+        functions.overwrite(lastID, store.last);
+        console.log('File Updated to ' + store.last);
     }
 }
 
