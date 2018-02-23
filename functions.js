@@ -5,10 +5,27 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+exports.nextParameter = function(pair, index) {
+    if (store.array.length > 0){
+        store.parameter = store.array[index];
+    }else{
+        functions.csvToArray(pair);
+        store.parameter = store.array[index];
+    }
+}
+
+exports.csvToArray = function(pair) {
+    var stuff = fs.readFileSync('./' + pair + '.csv', 'utf8');
+    store.array = stuff.split(',');
+}
+
 exports.getHistoric = async function(pair) {
     store.pair = pair;
-    if (fs.existsSync('./LastID.txt')){
-        store.last = fs.readFileSync('./LastID.txt', 'utf8');
+    store.first = pair.substring(0, 3);
+    store.second = pair.substring(3, 6);
+    store.completePair = 'X' + store.first + 'Z' + store.second;
+    if (fs.existsSync('./LastID' + pair + '.txt')){
+        store.last = fs.readFileSync('./LastID' + pair + '.txt', 'utf8');
     }
     await functions.historic();
 }
@@ -25,14 +42,15 @@ exports.printResultsHistoric = function(error, data) {
     }
     else {
         store.last = data.result.last;
+        store.searcher = 'data.result.' + store.completePair;
         var tempData = [];
-        tempData = data.result.XXRPZUSD;
+        tempData = eval(store.searcher);
         for (m = 0; m < tempData.length; m++){
             tempData[m] = tempData[m][0];
         }
         tempData.unshift('');
         var pairName = store.pair + '.csv';
-        var lastID = 'LastID.txt';
+        var lastID = 'LastID' + store.pair + '.txt';
         functions.write(pairName, tempData);
         functions.overwrite(lastID, store.last);
         console.log('File Updated to ' + store.last);
@@ -106,9 +124,9 @@ exports.printResultsDepth = function(error, data) {
     if(error != null)
         console.log(error);
     else
-        store.spread = 100 * (data.result.XXRPZUSD.asks[0][0] - data.result.XXRPZUSD.bids[0][0]) / data.result.XXRPZUSD.asks[0][0];
-        store.bid = data.result.XXRPZUSD.bids[0][0];
-        store.ask = data.result.XXRPZUSD.asks[0][0];
+        store.spread = 100 * (eval(store.searcher).asks[0][0] - eval(store.searcher).bids[0][0]) / eval(store.searcher).asks[0][0];
+        store.bid = eval(store.searcher).bids[0][0];
+        store.ask = eval(store.searcher).asks[0][0];
         console.log('Bid: ' + store.bid + ' Ask: ' + store.ask + ' spread: ' + store.spread);
 }
 
@@ -116,7 +134,7 @@ exports.printResultsTrades = function(error, data) {
     if(error != null)
         console.log(error);
     else {
-        var matrix = data.result.XXRPZUSD;
+        var matrix = eval(store.searcher);
         store.min = Infinity;
         for (i=0; i<matrix.length; i++) {
             if(matrix[i][0] < store.min)

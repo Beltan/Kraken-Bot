@@ -7,7 +7,14 @@ module.exports = {
     buyPrice: 1,
     min: Infinity,
     pair: 'XRPUSD',
+    first: 'XRP',
+    second: 'USD',
+    completePair: 'XXRPZUSD',
+    searcher: 'data.result.XXRPZUSD',
     tradeHistory: [],
     last: 10000,
-    data: []
+    data: [],
+    array: [],
+    index: 0,
+    parameter: 0
 }
