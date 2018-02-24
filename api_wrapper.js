@@ -59,4 +59,4 @@ function updatePrice() {
     kraken.api('Depth', {pair, count}, callbackUpdatePrice);
 }
 
-setInterval (updatePrice, 10000);
+setInterval (updatePrice, 5000);
