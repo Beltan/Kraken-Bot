@@ -16,5 +16,6 @@ module.exports = {
     data: [],
     array: [],
     index: 0,
-    parameter: 0
+    parameter: 0,
+    localHistory: []
 }

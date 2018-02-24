@@ -5,6 +5,39 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+exports.botTest = function() {
+    functions.nextParameter(0);
+    for (i = 0; i < store.array.length; i++){
+        functions.nextParameter(i);
+        functions.testTrade();
+    }
+    store.min = Infinity;
+}
+
+exports.testTrade = function() {
+    store.bid = store.parameter * 0.9995;
+    store.ask = store.parameter * 1.0005;
+    store.spread = 0.1;
+    if (store.localHistory.length < 150){
+        store.localHistory.push(store.parameter);
+    }else{
+        store.localHistory.pop();
+        store.localHistory.unshift(store.parameter);
+    }
+    store.min = Infinity;
+    for (j = 0; j < store.localHistory.length; j++) {
+        if (store.min > store.localHistory[j]){
+            store.min = store.localHistory[j]
+        }
+    }
+    var sellIncrease = 100 * (store.bid - store.buyPrice) / store.buyPrice;
+    var buyIncrease = 100 * (store.ask - store.min) / store.min;
+    if (!store.longPosition && (buyIncrease >= 0.5 && buyIncrease <= 1))
+        functions.buy();
+    else if (store.longPosition && (sellIncrease >= 5 || sellIncrease <= -10))
+        functions.sell();
+}
+
 exports.initialize = function(pair) {
     store.pair = pair;
     store.first = pair.substring(0, 3);
@@ -97,7 +130,7 @@ exports.placeBuyOrder = function() {
     store.testBalance[store.second] = 0;
     store.longPosition = true;
     store.buyPrice = store.ask;
-    var history = {'type' : 'buy', 'value' : store.buyPrice, 'commission' : commission, 'balance' : store.testBalance};
+    var history = {'type' : 'buy', 'value' : store.buyPrice, 'commission' : commission, 'balance' : store.testBalance[store.first]};
     store.tradeHistory.push(history);
 }
 
@@ -105,7 +138,7 @@ exports.placeSellOrder = function() {
     commission = store.testBalance[store.first] * store.bid * 0.0015;
     store.testBalance[store.second] = store.testBalance[store.first] * store.bid - commission;
     store.longPosition = false;
-    var history = {'type' : 'sell', 'value' : store.bid, 'commission' : commission, 'balance' : store.testBalance};
+    var history = {'type' : 'sell', 'value' : store.bid, 'commission' : commission, 'balance' : store.testBalance[store.second]};
     store.tradeHistory.push(history);
     store.testBalance[store.first] = 0;
 }
@@ -139,7 +172,7 @@ exports.printResultsTrades = function(error, data) {
     else {
         var matrix = eval(store.searcher);
         store.min = Infinity;
-        for (i=0; i<matrix.length; i++) {
+        for (i = 0; i < matrix.length; i++) {
             if(matrix[i][0] < store.min)
                 store.min = matrix[i][0];
         }
