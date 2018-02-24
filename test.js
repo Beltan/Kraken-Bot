@@ -1,53 +1,21 @@
-var fs = require('fs');
-var contents = fs.readFileSync('C:\\Users\\emrbe\\OneDrive\\Documents\\GitHub\\key.js'.toString(), 'utf8').split('\n');
-const key             = contents[0]; // API Key
-const secret          = contents[1]; // API Private Key
-const KrakenClient    = require('kraken-api');
-const kraken          = new KrakenClient(key, secret);
+functions = require('./functions');
+store = require('./store');
 
-var store = {
-    pair: 'XRPUSD',
-    last: 10000,
-    historicCounter: 0,
-    matrix: [],
-    data: []
-};
+// Initializes pair values
+functions.initialize('XRPUSD');
 
-async function loop() {
-    for (i = 0; i < 5; i++){
-        await historic();
-    }
-    await unify();
-}
+// Test with past values saved on a .csv
+functions.botTest();
 
-async function historic() {
-    pair = store.pair;
-    since = store.last;
-    await kraken.api('Trades', {pair, since}, printResultsTrades);
-}
+/*
+// Real time values and test trading for the pair defined in store
+setInterval (functions.trade, 10000);
+setInterval (functions.depth, 10000);
+setInterval (functions.historicInit, 10000);
+*/
 
-async function historicInit() {
-    pair = store.pair;
-    await kraken.api('Trades', {pair}, printResultsTrades);
-}
+// Gets the data of the specified pair and saves it on a .csv file
+//setInterval(functions.getHistoric, 3000);
 
-function printResultsTrades(error, data) {
-    if(error != null)
-        console.log(error);
-    else {
-        store.last = data.result.last;
-        store.matrix[store.historicCounter] = data.result.XXRPZUSD;
-        store.historicCounter++;
-        console.log(store.historicCounter);
-    }
-}
-
-function unify() {
-    for (i = 0; i < store.matrix.length; i++){
-        for (j = 0; j < 1000; j++){
-            store.data[i * 1000 + j] = store.matrix[i][j][0];
-        }
-    }
-}
-
-loop();
+// Gets the data from the .csv file and saves the asked value in store.parameter
+// functions.nextParameter(1);
