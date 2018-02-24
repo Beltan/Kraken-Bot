@@ -26,6 +26,7 @@ window.onload = function(){
     var socket = io();
 
     socket.on('chartData', function(config){
+        console.log(config);
         if(config.id in graphs) {
             graphs[config.id].update(config);
         }
