@@ -18,6 +18,7 @@ io.on('connection', function(socket){
     });
 
     socket.emit("chartData", {
+        id : "test",
         type: 'bar',
         data: {
             labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
