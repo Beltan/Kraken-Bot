@@ -1,0 +1,13 @@
+{
+    "name": "kraken-bot",
+    "version": "0.0.1",
+    "description": "A kraken bot",
+    "main": "lib/server.js",
+    "dependencies": {
+      "fs": "*",
+      "kraken-api": "*",
+      "socket.io": "*",
+      "http" : "*"
+    },
+    "license": "MIT"
+  }
