@@ -3,11 +3,15 @@ ia = require('./ia');
 
 api.initialize(pair = 'XRPUSD');
 
-while(api.index < api.historic.length){
-    if (config.realMode) {
-        setInterval (api.depth, 15000);
+if (config.realMode) {
+    setInterval (api.depth, config.timer);
+    setInterval (api.getValues, config.timer);
+    setInterval (function() {ia.decide({bid, ask});}, config.timer);
+    setInterval (function() {ia.decide({decision});}, config.timer);
+}else {
+    while (api.index < api.historic.length){
+        api.getValues();
+        ia.decide({bid, ask});
+        api.execute(decision);
     }
-    api.getValues();
-    ia.decide({bid, ask});
-    api.execute(decision);
 }
