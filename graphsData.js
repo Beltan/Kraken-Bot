@@ -11,13 +11,13 @@ var chartColors = {
 
 function getColorIndex(i) {
     let values = Object.values(chartColors);
-    return values[i % chartColors.length];
+    return values[i % values.length];
 }
 
 function getRandomColor() {
     let values = Object.values(chartColors);
-    var i = Math.floor(Math.random() * chartColors.length);
-    return getColorIndex(i);
+    var i = Math.floor(Math.random() * values.length);
+    return values[i % values.length];
 }
 
 function getOption(key, def, i, options) {
