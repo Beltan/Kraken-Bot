@@ -29,5 +29,6 @@ exports.decide = function({bid, ask}) {
     }else {
         decision = 'standby';
     }
+    api.decision = decision;
     return decision;
 }

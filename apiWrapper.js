@@ -6,19 +6,17 @@ const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
 exports.execute = function(decision) {
-    if (decision == 'standby') {}
-    else if (config.realMode) {
-        if (decision == 'buy') {
-            if (api.spread < 0.25) {}else {
-                console.log('Failed to buy, spread is too large');
-            }
+    if (config.realMode) {
+        if (decision == 'standby') {}
+        else if (decision == 'buy') {
+            api.placeBuyOrder();
+            api.check();
         }else if (decision == 'sell') {
-            if (api.spread < 0.5) {}else{
-            console.log('Failed to sell, spread is too large');
-            }
+            api.checkSell();
         }
     }else {
-        if (decision == 'buy') {
+        if (decision == 'standby') {}
+        else if (decision == 'buy') {
             commission = api.balance[api.second] * 0.0015;
             api.balance[api.second] = api.balance[api.second] - commission;
             api.balance[api.first] = api.balance[api.second] / api.buyPrice;
@@ -46,7 +44,6 @@ exports.getValues = function() {
     if (config.realMode) {
         bid = api.updatedBid;
         ask = api.updatedAsk;
-        api.spread = 100 * (ask - bid) / ask;
         return {
             bid: bid,
             ask: ask
@@ -81,10 +78,14 @@ exports.initialize = function(pair) {
     api.pair = pair;
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);
+    api.completePair = 'X' + api.first + 'Z' + api.second;
+    api.searcher = 'data.result.' + api.completePair;
+    api.status = 'closed';
+    api.txid = '';
+    api.decision = 'standby';
     ia.localHistory = [];
     ia.bid = -1;
     ia.ask = -1;
-    api.spread = 0.1;
     ia.localMin = Infinity;
     ia.sellIncrease = 0;
     ia.buyIncrease = 0;
@@ -109,4 +110,115 @@ exports.printResultsDepth = function(error, data) {
         api.updatedAsk = eval(api.searcher).asks[0][0];
         console.log('Bid: ' + api.updatedBid + ' Ask: ' + api.updatedAsk);
     }
+}
+
+exports.placeBuyOrder = function() {
+    pair = api.completePair;
+    type = 'buy';
+    ordertype = 'limit';
+    price = api.updatedBid + 0.00001;
+    volume = api.balance[api.first] / price;
+    kraken.api('AddOrder', {pair, type, ordertype, price, volume}, api.resultsOrder);
+}
+
+exports.placeSellOrder = function() {
+    pair = api.completePair;
+    type = 'sell';
+    ordertype = 'stop-loss-profit';
+    price = api.buyPrice * (1 + config.sellNegative / 100);
+    price2 = api.buyPrice * (1 + config.sellPositive / 100);
+    volume = api.balance[api.second];
+    kraken.api('AddOrder', {pair, type, ordertype, price, price2, volume}, api.resultsOrder);
+}
+
+exports.checkSell = function() {
+    kraken.api('QueryOrders', {txid = api.txid}, api.resultsCheckSell);
+}
+
+exports.resultsCheckSell = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        if (data.result[api.txid]['status'] == 'closed') {
+            api.longPosition = false;
+            console.log('Sold at ' + data.result[api.txid]['price']);
+        } else {
+            console.log('Something is wrong'); // Some way to terminate the program should be implemented for safety.
+        }
+    }
+}
+
+exports.resultsOrder = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        api.txid = data.result.txid;
+        api.checkPending();
+        while (api.status == 'pending') {
+            api.checkPending();
+        }
+        console.log('Order placed: ' + data.result.descr.order);
+    }
+}
+
+exports.resultsQuery = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        api.status = data.result[api.txid]['status'];
+        if (api.status = 'closed'){
+            console.log('Bought at ' + data.result[api.txid]['price']);
+            api.longPosition = true;
+            api.placeSellOrder();
+        }else if (api.status == 'open') {
+            if (data.result[api.txid]['vol_exec'] == 0) {
+                if (api.decision == 'buy') {
+                    if (api.updatedBid != data.results[api.txid]['price']) {
+                        api.cancelOrder();
+                        api.placeBuyOrder();
+                    }
+                }else {
+                    api.cancelOrder();
+                }
+            }else {
+                if (api.decision == 'buy') {
+                }else {
+                    api.cancelOrder();
+                    api.longPosition = true;
+                    api.placeSellOrder();
+                }
+            }
+        }
+    }
+}
+
+exports.cancelOrder = function() {
+    kraken.api('CancelOrder', txid = api.txid, api.resultCancelOrder);
+}
+
+exports.resultCancelOrder = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        api.checkPending();
+        while (api.status == 'pending') {
+            api.checkPending();
+        }
+    }
+}
+
+exports.checkPending = function() {
+    kraken.api('QueryOrders', txid = api.txid, api.resultsPending);
+}
+
+exports.resultsPending = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        api.status = data.results[api.txid]['status'];
+    }
+}
+
+exports.check = function() {
+    kraken.api('QueryOrders', {txid = api.txid}, api.resultsQuery);
 }
