@@ -1,11 +1,11 @@
 api = require('./apiWrapper');
 
 var chartColors = {
+    blue: 'rgb(54, 162, 235)',
     red: 'rgb(255, 99, 132)',
     orange: 'rgb(255, 159, 64)',
     yellow: 'rgb(255, 205, 86)',
     green: 'rgb(75, 192, 192)',
-    blue: 'rgb(54, 162, 235)',
     purple: 'rgb(153, 102, 255)'
 };
 
@@ -28,69 +28,66 @@ function getOption(key, def, i, options) {
     return option;
 }
 
-exports.getGraph = function(id, data, key = null, options = [], filters = []) {
-
-    var maxLength = 0;
-
-    var datasets = [];
-    if(filters.length > 0) {
-        // we add the data that pass the filters
-        for(var i = 0; i < filters.length; i++) {
-            var newValues = data.filter(filters[i]);
-            if(key != null)
-                newValues = newValues.map(a => a[key]);
-
-            //get the color
-            var color = getOption("color", getColorIndex(i), i, options);
-
-            //get the label
-            var label = getOption("label", id + ":" + key, i, options);
-
-            datasets.push({
-                label: label,
-                borderColor: color,
-                data: newValues
-            });
-
-            if(newValues.length > maxLength)
-                maxLength = newValues.length;
-        }
-    }
-    else {
-        // if we have a key then we need to convert the data
-        if(key != null)
-            data = data.map(a => a[key]);
-
-        maxLength = data.length;
-
-        //get label
-        var label = getOption("label", id, 0, options);
-
-        datasets.push({
-            label: label,
-            borderColor: getRandomColor(),
-            data: data,
-        });
-    }
-
-
+function graphObject(id, datasets, length) {
     return {
         id : id.replace(/\s+/g, ''),
         type: 'line',
         data: {
-            labels: Array(maxLength).fill(''),
+            labels: Array(length).fill(''),
             datasets: datasets
         },
         options: {
             scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false
+                    }
+                }],
                 yAxes: [{
                     ticks: {
                         beginAtZero:true
+                    },
+                    gridLines: {
+                        display: false
                     }
                 }]
             }
         }
     };
+}
+
+exports.getGraph = function(id, data, key = null, options = [], filters = []) {
+
+    if(filters.length == 0) {
+        filters.push(a => true);
+    }
+
+    var maxLength = 0;
+
+    var datasets = [];
+    // we add the data that pass the filters
+    for(var i = 0; i < filters.length; i++) {
+        var newValues = data.filter(filters[i]);
+        if(key != null)
+            newValues = newValues.map(a => a[key]);
+
+        //get the color
+        var color = getOption("color", getColorIndex(i), i, options);
+
+        //get the label
+        var label = getOption("label", id + ":" + i, i, options);
+
+        datasets.push({
+            label: label,
+            borderColor: color,
+            data: newValues
+        });
+
+        if(newValues.length > maxLength)
+            maxLength = newValues.length;
+    }
+   
+    return graphObject(id, datasets, maxLength);
     
 }
 
@@ -116,6 +113,4 @@ exports.getHistoricGraph = function(column, filterColumn = null, filterValue = n
     }
   
     return this.getGraph(name, api.tradeHistory, column, [], filterFunctions);
-    
-
 }
