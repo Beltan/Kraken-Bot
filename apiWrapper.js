@@ -6,21 +6,27 @@ const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
 exports.execute = function(decision) {
-    if (decision == 'standby') {}else if (decision == 'buy'){
-        if (ia.spread < 0.25){
+    if (decision == 'standby') {}
+    else if (config.realMode) {
+        if (decision == 'buy') {
+            if (api.spread < 0.25) {}else {
+                console.log('Failed to buy, spread is too large');
+            }
+        }else if (decision == 'sell') {
+            if (api.spread < 0.5) {}else{
+            console.log('Failed to sell, spread is too large');
+            }
+        }
+    }else {
+        if (decision == 'buy') {
             commission = api.balance[api.second] * 0.0015;
             api.balance[api.second] = api.balance[api.second] - commission;
-            api.balance[api.first] = api.balance[api.second] / ia.ask;
+            api.balance[api.first] = api.balance[api.second] / api.buyPrice;
             api.balance[api.second] = 0;
             api.longPosition = true;
-            api.buyPrice = ia.ask;
             var history = {'type' : 'buy', 'value' : api.buyPrice, 'commission' : commission, 'balance' : api.balance[api.first]};
             api.tradeHistory.push(history);
-        }else{
-            console.log('Failed to buy, spread is too large');
-        }
-    }else if (decision == 'sell'){
-        if (ia.spread < 0.5) {
+        }else if (decision == 'sell') {
             if (ia.sellIncrease >= config.sellPositive){
                 commission = api.balance[api.first] * api.buyPrice * (1 + config.sellPositive / 100) * 0.0015;
                 api.balance[api.second] = api.balance[api.first] * api.buyPrice * (1 + config.sellPositive / 100) - commission;
@@ -32,28 +38,40 @@ exports.execute = function(decision) {
             var history = {'type' : 'sell', 'value' : api.buyPrice * (1 + config.sellPositive / 100), 'commission' : commission, 'balance' : api.balance[api.second]};
             api.tradeHistory.push(history);
             api.balance[api.first] = 0;
-        }else{
-            console.log('Failed to sell, spread is too large');
         }
     }
 }
 
 exports.getValues = function() {
-    if (api.historic.length > 0){
-        if (api.index < api.historic.length){
+    if (config.realMode) {
+        bid = api.updatedBid;
+        ask = api.updatedAsk;
+        api.spread = 100 * (ask - bid) / ask;
+        return {
+            bid: bid,
+            ask: ask
+        };
+    }else {
+        if (api.historic.length > 0){
+            if (api.index < api.historic.length){
+                api.index++;
+                value = api.historic[api.index];
+            }
+        }else{
             api.index++;
+            api.csvToArray();
             value = api.historic[api.index];
         }
-    }else{
-        api.index++;
-        api.csvToArray();
-        value = api.historic[api.index];
+        bid = value * 0.9995;
+        ask = value * 1.0005;
+        return {
+            bid: bid,
+            ask: ask
+        };
     }
-    return value
 }
 
-exports.initialize = function(realMode, pair) {
-    api.realMode = realMode;
+exports.initialize = function(pair) {
     api.balance = {'USD' : 50, 'XRP' : 0};
     api.index = -1;
     api.buyPrice = 1;
@@ -66,7 +84,7 @@ exports.initialize = function(realMode, pair) {
     ia.localHistory = [];
     ia.bid = -1;
     ia.ask = -1;
-    ia.spread = 0.1;
+    api.spread = 0.1;
     ia.localMin = Infinity;
     ia.sellIncrease = 0;
     ia.buyIncrease = 0;
@@ -75,4 +93,20 @@ exports.initialize = function(realMode, pair) {
 exports.csvToArray = function() {
     var stuff = fs.readFileSync('./' + api.pair + '.csv', 'utf8');
     api.historic = stuff.split(',');
+}
+
+exports.depth = function() {
+    pair = api.pair;
+    count = 1;
+    kraken.api('Depth', {pair, count}, api.printResultsDepth);
+}
+
+exports.printResultsDepth = function(error, data) {
+    if (error != null) {
+        console.log(error);
+    }else {
+        api.updatedBid = eval(api.searcher).bids[0][0];
+        api.updatedAsk = eval(api.searcher).asks[0][0];
+        console.log('Bid: ' + api.updatedBid + ' Ask: ' + api.updatedAsk);
+    }
 }

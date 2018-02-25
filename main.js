@@ -1,10 +1,13 @@
 api = require('./apiWrapper');
 ia = require('./ia');
 
-api.initialize(realMode = false, pair = 'XRPUSD');
+api.initialize(pair = 'XRPUSD');
 
-while(true){
+while(api.index < api.historic.length){
+    if (config.realMode) {
+        setInterval (api.depth, 15000);
+    }
     api.getValues();
-    ia.decide(value);
+    ia.decide({bid, ask});
     api.execute(decision);
 }
