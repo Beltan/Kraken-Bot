@@ -5,11 +5,8 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-exports.decide = function(value) {
-    if (!api.realmode) {
-        ia.bid = value * 0.9995;
-        ia.ask = value * 1.0005;
-    }else {} //define bid and ask for real mode
+exports.decide = function({bid, ask}) {
+    value = (bid + ask) / 2;
     if (ia.localHistory.length < config.local){
         ia.localHistory.push(value);
     }else{
@@ -22,13 +19,14 @@ exports.decide = function(value) {
             ia.localMin = ia.localHistory[j]
         }
     }
-    ia.sellIncrease = 100 * (ia.bid - api.buyPrice) / api.buyPrice;
-    ia.buyIncrease = 100 * (ia.ask - ia.localMin) / ia.localMin;
-    if (!api.longPosition && (ia.buyIncrease >= config.lowBuy && ia.buyIncrease <= config.highBuy))
+    ia.sellIncrease = 100 * (bid - api.buyPrice) / api.buyPrice;
+    ia.buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
+    if (!api.longPosition && (ia.buyIncrease >= config.lowBuy && ia.buyIncrease <= config.highBuy)) {
         decision = 'buy';
-    else if (api.longPosition && (ia.sellIncrease >= config.sellPositive || ia.sellIncrease <= config.sellNegative))
+        api.buyPrice = ask;
+    }else if (api.longPosition && (ia.sellIncrease >= config.sellPositive || ia.sellIncrease <= config.sellNegative)) {
         decision = 'sell';
-    else {
+    }else {
         decision = 'standby';
     }
     return decision;
