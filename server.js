@@ -23,7 +23,7 @@ io.on('connection', function(socket){
 		
     });
 
-    socket.emit("chartData", graph.getHistoricGraph("balance"));
+    socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell"));
     socket.emit("chartData", graph.getHistoricGraph("value"));
 });
 
@@ -36,4 +36,4 @@ while(api.index < api.historic.length){
     api.execute(decision);
 }
 
-console.log(api.tradeHistory.map(a => a.value));
+console.log(api.tradeHistory.map(a => a.balance));
