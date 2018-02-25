@@ -21,6 +21,7 @@ exports.decide = function({bid, ask}) {
     }
     ia.sellIncrease = 100 * (bid - api.buyPrice) / api.buyPrice;
     ia.buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
+    api.previousDecision = api.decision;
     if (!api.longPosition && (ia.buyIncrease >= config.lowBuy && ia.buyIncrease <= config.highBuy)) {
         decision = 'buy';
         api.buyPrice = ask;

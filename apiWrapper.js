@@ -7,7 +7,11 @@ const kraken = new KrakenClient(key, secret);
 
 exports.execute = function(decision) {
     if (config.realMode) {
-        if (decision == 'standby') {}
+        if (decision == 'standby') {
+            if (api.previousDecision == 'buy') {
+                api.check();
+            }
+        }
         else if (decision == 'buy') {
             api.placeBuyOrder();
             api.check();
@@ -83,6 +87,7 @@ exports.initialize = function(pair) {
     api.state = 'closed';
     api.txid = '';
     api.decision = 'standby';
+    api.previousDecision = 'standby';
     ia.localHistory = [];
     ia.bid = -1;
     ia.ask = -1;
