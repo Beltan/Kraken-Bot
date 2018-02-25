@@ -9,6 +9,9 @@ var io = require('socket.io')(http);
 api = require('./apiWrapper');
 ia = require('./ia');
 
+// Graphs requires
+graph = require('./graphsData');
+
 //Server init
 http.listen(3000, function() {
     console.log('listening on *:3000');
@@ -19,26 +22,9 @@ io.on('connection', function(socket){
 	socket.on('disconnect', function() {
 		
     });
-    //data: api.tradeHistory.map(a => Math.round(a.balance)),
-    socket.emit("chartData", {
-        id : 'test',
-        type: 'line',
-        data: {
-            labels: Array(api.tradeHistory.length).fill(''),
-            datasets: [{
-                data: api.tradeHistory.map(a => Math.round(a.balance)),
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero:true
-                    }
-                }]
-            }
-        }
-    });
+
+    socket.emit("chartData", graph.getHistoricGraph("balance"));
+    socket.emit("chartData", graph.getHistoricGraph("value"));
 });
 
 //we init the simulation
@@ -50,4 +36,4 @@ while(api.index < api.historic.length){
     api.execute(decision);
 }
 
-console.log(api.tradeHistory.map(a => a.balance));
+console.log(api.tradeHistory.map(a => a.value));
