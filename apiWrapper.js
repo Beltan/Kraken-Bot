@@ -29,7 +29,7 @@ exports.execute = function(decision) {
                 api.balance[api.second] = api.balance[api.first] * api.buyPrice * (1 + config.sellNegative / 100) - commission;
             }
             api.longPosition = false;
-            var history = {'type' : 'sell', 'value' : ia.bid, 'commission' : commission, 'balance' : api.balance[api.second]};
+            var history = {'type' : 'sell', 'value' : api.buyPrice * (1 + config.sellPositive / 100), 'commission' : commission, 'balance' : api.balance[api.second]};
             api.tradeHistory.push(history);
             api.balance[api.first] = 0;
         }else{
