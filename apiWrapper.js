@@ -80,7 +80,7 @@ exports.initialize = function(pair) {
     api.second = pair.substring(3, 6);
     api.completePair = 'X' + api.first + 'Z' + api.second;
     api.searcher = 'data.result.' + api.completePair;
-    api.status = 'closed';
+    api.state = 'closed';
     api.txid = '';
     api.decision = 'standby';
     ia.localHistory = [];
@@ -154,7 +154,7 @@ exports.resultsOrder = function(error, data) {
     }else {
         api.txid = data.result.txid;
         api.checkPending();
-        while (api.status == 'pending') {
+        while (api.state == 'pending') {
             api.checkPending();
         }
         console.log('Order placed: ' + data.result.descr.order);
@@ -165,12 +165,12 @@ exports.resultsQuery = function(error, data) {
     if (error != null) {
         console.log(error);
     }else {
-        api.status = data.result[api.txid]['status'];
-        if (api.status = 'closed'){
+        api.state = data.result[api.txid]['status'];
+        if (api.state = 'closed'){
             console.log('Bought at ' + data.result[api.txid]['price']);
             api.longPosition = true;
             api.placeSellOrder();
-        }else if (api.status == 'open') {
+        }else if (api.state == 'open') {
             if (data.result[api.txid]['vol_exec'] == 0) {
                 if (api.decision == 'buy') {
                     if (api.updatedBid != data.results[api.txid]['price']) {
@@ -201,7 +201,7 @@ exports.resultCancelOrder = function(error, data) {
         console.log(error);
     }else {
         api.checkPending();
-        while (api.status == 'pending') {
+        while (api.state == 'pending') {
             api.checkPending();
         }
     }
@@ -215,7 +215,7 @@ exports.resultsPending = function(error, data) {
     if (error != null) {
         console.log(error);
     }else {
-        api.status = data.results[api.txid]['status'];
+        api.state = data.results[api.txid]['status'];
     }
 }
 
