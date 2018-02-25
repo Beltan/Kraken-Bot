@@ -44,7 +44,7 @@ exports.getGraph = function(id, data, key = null, options = [], filters = []) {
             var color = getOption("color", getColorIndex(i), i, options);
 
             //get the label
-            var label = getOption("label", id + ":" + i, i, options);
+            var label = getOption("label", id + ":" + key, i, options);
 
             datasets.push({
                 label: label,
