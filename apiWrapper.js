@@ -137,7 +137,8 @@ exports.placeSellOrder = function() {
 }
 
 exports.checkSell = function() {
-    kraken.api('QueryOrders', {txid = api.txid}, api.resultsCheckSell);
+    txid = api.txid
+    kraken.api('QueryOrders', {txid}, api.resultsCheckSell);
 }
 
 exports.resultsCheckSell = function(error, data) {
@@ -225,5 +226,6 @@ exports.resultsPending = function(error, data) {
 }
 
 exports.check = function() {
-    kraken.api('QueryOrders', {txid = api.txid}, api.resultsQuery);
+    txid = api.txid
+    kraken.api('QueryOrders', {txid}, api.resultsQuery);
 }
