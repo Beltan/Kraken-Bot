@@ -21,30 +21,29 @@ exports.execute = function(decision) {
     }else {
         if (decision == 'standby') {}
         else if (decision == 'buy') {
-            commission = api.balance[api.second] * 0.0015;
-            api.balance[api.second] = api.balance[api.second] - commission;
-            api.balance[api.first] = api.balance[api.second] / api.buyPrice;
-            api.balance[api.second] = 0;
-            api.longPosition = true;
-            var history = {'type' : 'buy', 'value' : api.buyPrice, 'commission' : commission, 'balance' : api.balance[api.first]};
+            buyBalance = api.balance[api.second] / (config.maxBuy - api.buyCounter);
+            commission = buyBalance * 0.0015;
+            api.balance[api.second] = api.balance[api.second] - commission - buyBalance;
+            api.balance[api.first] = api.balance[api.first] + buyBalance / api.buyPrice;
+            var history = {'type' : 'buy', 'value' : api.buyPrice, 'quantity' : buyBalance / api.buyPrice, 'commission' : commission, 'balance' : api.balance[api.first] + api.balance[api.second] / api.buyPrice};
+            api.buyCounter++;
             api.tradeHistory.push(history);
+            api.openTrades.push(history);
         }else if (decision == 'sell') {
-            if (ia.sellIncrease >= config.sellPositive){
-                commission = api.balance[api.first] * api.buyPrice * (1 + config.sellPositive / 100) * 0.0015;
-                api.balance[api.second] = api.balance[api.first] * api.buyPrice * (1 + config.sellPositive / 100) - commission;
-                var history = {'type' : 'sell', 'value' : api.buyPrice * (1 + config.sellPositive / 100), 'commission' : commission, 'balance' : api.balance[api.second]};
+            if (ia.sellIncreaseWin >= config.sellPositive){
+                api.sellPrice = api.lowestBuy * (1 + config.sellPositive / 100);
             } else{
                 api.getNextValues();
                 if (bid < api.sellPrice) {
                     api.sellPrice = bid;
                 }
-                commission = api.balance[api.first] * api.sellPrice * 0.0015;
-                api.balance[api.second] = api.balance[api.first] * api.sellPrice - commission;
-                var history = {'type' : 'sell', 'value' : api.sellPrice, 'commission' : commission, 'balance' : api.balance[api.second]};
             }
-            api.longPosition = false;
+            commission = api.sellBalance * api.sellPrice * 0.0015;
+            api.balance[api.second] = api.balance[api.second] + api.sellBalance * api.sellPrice - commission;
+            api.balance[api.first] = api.balance[api.first] - api.sellBalance;
+            var history = {'type' : 'sell', 'value' : api.sellPrice, 'quantity' : api.sellBalance, 'commission' : commission, 'balance' : api.balance[api.second] + api.balance[api.first] * api.sellPrice};
+            api.buyCounter--;
             api.tradeHistory.push(history);
-            api.balance[api.first] = 0;
         }
     }
 }
@@ -96,8 +95,8 @@ exports.initialize = function(pair) {
     api.sellPrice = 1;
     api.buyPrice = 1;
     api.tradeHistory = [];
+    api.openTrades = [];
     api.historic = [];
-    api.longPosition = false;
     api.pair = pair;
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);
@@ -106,12 +105,16 @@ exports.initialize = function(pair) {
     api.state = 'closed';
     api.txid = '';
     api.decision = 'standby';
-    api.previousDecision = 'standby';
+    api.buyCounter = 0;
+    api.lowestBuy = 0;
+    api.highestBuy = 0;
+    api.sellBalance = 0;
     ia.localHistory = [];
     ia.bid = -1;
     ia.ask = -1;
     ia.localMin = Infinity;
-    ia.sellIncrease = 0;
+    ia.sellIncreaseWin = 0;
+    ia.sellIncreaseLose = 0;
     ia.buyIncrease = 0;
 }
 

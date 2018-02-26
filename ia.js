@@ -19,15 +19,36 @@ exports.decide = function({bid, ask}) {
             ia.localMin = ia.localHistory[j]
         }
     }
-    ia.sellIncrease = 100 * (bid - api.buyPrice) / api.buyPrice;
+    if (0 < api.openTrades.length) {
+        api.lowestBuy = Infinity;
+        api.highestBuy = 0;
+    }
+    for (i = 0; i < api.openTrades.length; i++) {
+        if (api.openTrades[i]['value'] <= api.lowestBuy) {
+            api.lowestBuy = api.openTrades[i]['value'];
+        }
+        if (api.openTrades[i]['value'] >= api.highestBuy) {
+            api.highestBuy = api.openTrades[i]['value'];
+        }
+    }
+    ia.sellIncreaseLose = 100 * (bid - api.highestBuy) / api.highestBuy;
+    ia.sellIncreaseWin = 100 * (bid - api.lowestBuy) / api.lowestBuy;
     ia.buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
-    api.previousDecision = api.decision;
-    if (!api.longPosition && (ia.buyIncrease >= config.lowBuy && ia.buyIncrease <= config.highBuy)) {
+    if ((api.buyCounter < config.maxBuy) && (api.buyCounter == 0 || api.lowestBuy > ask * (1 + config.multipleBuys / 100)) && (ia.buyIncrease >= config.lowBuy) && (ia.buyIncrease <= config.highBuy)) {
         decision = 'buy';
         api.buyPrice = ask;
-    }else if (api.longPosition && (ia.sellIncrease >= config.sellPositive || ia.sellIncrease <= config.sellNegative)) {
+    }else if ((api.buyCounter > 0) && (ia.sellIncreaseWin >= config.sellPositive)) {
         decision = 'sell';
         api.sellPrice = bid;
+        deleteIndex = api.openTrades.findIndex(i => i.value == api.lowestBuy);
+        api.sellBalance = api.openTrades[deleteIndex]['quantity'];
+        api.openTrades.splice(deleteIndex, 1);
+    }else if ((api.buyCounter > 0) && (ia.sellIncreaseLose <= config.sellNegative)) {
+        decision = 'sell';
+        api.sellPrice = bid;
+        deleteIndex = api.openTrades.findIndex(i => i.value == api.highestBuy);
+        api.sellBalance = api.openTrades[deleteIndex]['quantity'];
+        api.openTrades.splice(deleteIndex, 1);
     }else {
         decision = 'standby';
     }
