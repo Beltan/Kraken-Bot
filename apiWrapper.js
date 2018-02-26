@@ -34,9 +34,13 @@ exports.execute = function(decision) {
                 api.balance[api.second] = api.balance[api.first] * api.buyPrice * (1 + config.sellPositive / 100) - commission;
                 var history = {'type' : 'sell', 'value' : api.buyPrice * (1 + config.sellPositive / 100), 'commission' : commission, 'balance' : api.balance[api.second]};
             } else{
-                commission = api.balance[api.first] * api.buyPrice * (1 + config.sellNegative / 100) * 0.0015;
-                api.balance[api.second] = api.balance[api.first] * api.buyPrice * (1 + config.sellNegative / 100) - commission;
-                var history = {'type' : 'sell', 'value' : api.buyPrice * (1 + config.sellNegative / 100), 'commission' : commission, 'balance' : api.balance[api.second]};
+                api.getNextValues();
+                if (bid < api.sellPrice) {
+                    api.sellPrice = bid;
+                }
+                commission = api.balance[api.first] * api.sellPrice * 0.0015;
+                api.balance[api.second] = api.balance[api.first] * api.sellPrice - commission;
+                var history = {'type' : 'sell', 'value' : api.sellPrice, 'commission' : commission, 'balance' : api.balance[api.second]};
             }
             api.longPosition = false;
             api.tradeHistory.push(history);
@@ -73,9 +77,23 @@ exports.getValues = function() {
     }
 }
 
+exports.getNextValues = function() {
+    if (api.index < api.historic.length){
+        index = api.index + 1;
+        value = api.historic[index];
+    }
+    bid = value * 0.9995;
+    ask = value * 1.0005;
+    return {
+        bid: bid,
+        ask: ask
+    };
+}
+
 exports.initialize = function(pair) {
     api.balance = {'USD' : 50, 'XRP' : 0};
     api.index = -1;
+    api.sellPrice = 1;
     api.buyPrice = 1;
     api.tradeHistory = [];
     api.historic = [];

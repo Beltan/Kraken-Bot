@@ -27,6 +27,7 @@ exports.decide = function({bid, ask}) {
         api.buyPrice = ask;
     }else if (api.longPosition && (ia.sellIncrease >= config.sellPositive || ia.sellIncrease <= config.sellNegative)) {
         decision = 'sell';
+        api.sellPrice = bid;
     }else {
         decision = 'standby';
     }
