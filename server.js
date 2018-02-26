@@ -1,4 +1,4 @@
-//Server requires
+// Server requires
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -12,20 +12,19 @@ ia = require('./ia');
 // Graphs requires
 graph = require('./graphsData');
 
-//Server init
+// Server init
 http.listen(3000, function() {
     console.log('listening on *:3000');
 });
 
-//IO
+// IO
 io.on('connection', function(socket){
-	socket.on('disconnect', function() {
-    });
-
+	socket.on('disconnect', function() {});
     socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell"));
     socket.emit("chartData", graph.getHistoricGraph("value"));
 });
-//we init the simulation
+
+// Bot init
 api.initialize(pair = 'XRPUSD');
 
 if (config.realMode) {

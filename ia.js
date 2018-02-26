@@ -10,8 +10,8 @@ exports.decide = function({bid, ask}) {
     if (ia.localHistory.length < config.local){
         ia.localHistory.push(value);
     }else{
-        ia.localHistory.pop();
-        ia.localHistory.unshift(value);
+        ia.localHistory.shift();
+        ia.localHistory.push(value);
     }
     ia.localMin = Infinity;
     for (j = 0; j < ia.localHistory.length; j++) {
