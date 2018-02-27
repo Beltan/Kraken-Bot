@@ -5,6 +5,42 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+/*
+ Try to generalize as mutch as possible, the conif.realMode is done to a very high level,
+ if you want to code like that then it would have been mutch more better to do something like
+
+var api;
+if(config.realMode)
+    api = require(apiWrapper);
+else 
+    api = require(simulationApiWrapper);
+
+ and then code the functions and include one or the other.
+
+ I don't think this is a good practice even that, there are lots of things that could be common
+ for both of them.
+ 
+ The same that in ia, you shouldn't have ia.whatever, all the needed things should come, or either
+ inside the function, by another parameter that you want to add or are varaibles handled locally
+ byt the api.
+
+
+ The API SHOULDN'T THINK, it makes calls and returns objects, but don't have logic of when to buy,
+ when to sell, in consecuence, this shouldn't be here:
+
+    if (ia.sellIncreaseWin >= config.sellPositive){
+        api.sellPrice = api.lowestBuy * (1 + config.sellPositive / 100);
+    } else{
+        api.getNextValues();
+        if (bid < api.sellPrice) {
+            api.sellPrice = bid;
+        }
+    }
+
+ 
+
+*/
+
 exports.execute = function(decision) {
     if (config.realMode) {
         if (decision == 'standby') {

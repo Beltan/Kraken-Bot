@@ -5,7 +5,64 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+
+/* The idea here is to pass bid, ask, openTrades, buyPrice...
+ you shouldn't ask nothing to the api, therefore there shouldn't be any,
+ api.whatever. If you need them, pass them by parameter, and NEVER modify them,
+ the api should be responsible about that.
+
+ Also the returned decision should be like an instruction:
+ {decision : "buy", buyOrder: value, placeOrder : value}
+ and you are like ordering to the api what it should do: I want you to buy an order with this value,
+ and if there aren't any, then place one to this value.
+ THIS WAS JUST AN EXAMPLE, you can think a little what is the best "instruction"! ;)
+*/
+
+/* Localhistory should be a private var used by the IA, it should be declared and only modified
+ inside this class:
+
+var localHistory = [];
+
+and also have a init function, so we can init it if we want!!
+
+exports.init = function(history) {
+    localHistory = history;
+}
+
+PLEAE FOR THE SAKE OF CLARITY do smaller functions with smaller responsabilities.
+One could be:
+
+function updateHistory(value) {
+    if (localHistory.length < config.local){
+        localHistory.push(value);
+    }else{
+        localHistory.shift();
+        localHistory.push(value);
+    }
+}
+
+and another
+
+function getMinimumLocal() {
+    localMin = Infinity;
+    for (j = 0; j < ia.localHistory.length; j++) {
+        if (ia.localMin > ia.localHistory[j]){
+            ia.localMin = ia.localHistory[j]
+        }
+    }
+
+    return localMin;
+}
+
+ that but the way, the avobe function is very inneficient, there is a clever way of 
+ maintaining the local minimum, but that's out of the scope of this comments :P 
+
+ There are some more cases... that would be nice to have a function
+
+*/
+
 exports.decide = function({bid, ask}) {
+    
     value = (bid + ask) / 2;
     if (ia.localHistory.length < config.local){
         ia.localHistory.push(value);
