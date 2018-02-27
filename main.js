@@ -25,6 +25,10 @@ if (config.realMode) {
              but the ia, knows nothing about how to execute the instrucion, and it doens't care!!!
              it's job is to decide what is the next instruction, 
              HOW to execute it? that's for the api :) 
+             and the important thing, we know where are this variables comming, if they are global,
+             who updates them, who uses them? to know that, we need to look all the code, while if
+             you explicitly say, hey! I get this var here, and then I pass it to there, everything
+             gets clear.
             */
     }
 }
