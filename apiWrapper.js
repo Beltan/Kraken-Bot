@@ -5,9 +5,11 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+var api = {};
+
 exports.execute = function(decision) {
-    if (decision.type == 'standby') {}
-    else if (decision.type == 'buy') {
+   
+    if (decision.type == 'buy') {
         commission = decision.quantity * 0.0015;
         decision.quantity = decision.quantity - commission;
         api.balance[api.second] = api.balance[api.second] - commission - decision.quantity;
@@ -15,7 +17,7 @@ exports.execute = function(decision) {
         var history = {'type' : 'buy', 'value' : decision.price, 'quantity' : decision.quantity / decision.price, 'commission' : commission, 'balance' : api.balance[api.first] + api.balance[api.second] / decision.price};
         api.tradeHistory.push(history);
         api.openTrades.push(history);
-    }else if (decision.type == 'sell') {
+    } else if (decision.type == 'sell') {
         commission = decision.quantity * decision.price * 0.0015;
         api.balance[api.second] = api.balance[api.second] + decision.quantity * decision.price - commission;
         api.balance[api.first] = api.balance[api.first] - decision.quantity;
@@ -31,17 +33,14 @@ exports.getValues = function() {
             api.index++;
             value = api.historic[api.index];
         }
-    }else{
-        api.index++;
-        api.csvToArray();
-        value = api.historic[api.index];
     }
-    bid = value * 0.9995;
-    ask = value * 1.0005;
-    nextbid = api.historic[api.index + 1] * 0.9995;
-    openTrades = api.openTrades;
-    balance = api.balance[api.second];
-    values = {bid, nextbid, ask, value, openTrades, balance};
+
+    var bid = value * 0.9995;
+    var ask = value * 1.0005;
+    var nextbid = api.historic[api.index + 1] * 0.9995;
+    var openTrades = api.openTrades;
+    var balance = api.balance[api.second];
+    var values = {bid, nextbid, ask, value, openTrades, balance};
     return values;
 }
 
@@ -54,9 +53,15 @@ exports.initialize = function(pair) {
     api.pair = pair;
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);
+
+    this.csvToArray();
 }
 
 exports.csvToArray = function() {
     var stuff = fs.readFileSync('./' + api.pair + '.csv', 'utf8');
     api.historic = stuff.split(',');
+}
+
+exports.getApiState = function() {
+    return api;
 }

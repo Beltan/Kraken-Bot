@@ -6,20 +6,20 @@ const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
 var localHistory = [];
-var nextDeletion = 0;
+var lastDeleted;
 var localMin = Infinity;
 
-function updateHistory() {
+function updateHistory(value) {
     if (localHistory.length < config.local){
         localHistory.push(value);
     }else{
-        localHistory.shift();
+        lastDeleted = localHistory.shift();
         localHistory.push(value);
     }
 }
 
-function updateLocalMinimum() {
-    if (nextDeletion == localMin) {
+function updateLocalMinimum(value) {
+    if (lastDeleted == localMin) {
         localMin = Infinity;
         for (j = 0; j < localHistory.length; j++) {
             if (localMin > localHistory[j]){
@@ -31,14 +31,13 @@ function updateLocalMinimum() {
             localMin = value;
         }
     }
-    nextDeletion = localHistory[0];
 }
 
-function updateBuys() {
-    if (0 <= openTrades.length) {
-        lowestBuy = Infinity;
-        highestBuy = 0;
-    }
+function updateBuys(bid, openTrades) {
+
+    var lowestBuy = Infinity;
+    var highestBuy = 0;
+
     for (i = 0; i < openTrades.length; i++) {
         if (openTrades[i]['value'] <= lowestBuy) {
             lowestBuy = openTrades[i]['value'];
@@ -47,38 +46,53 @@ function updateBuys() {
             highestBuy = openTrades[i]['value'];
         }
     }
-    sellIncreaseLose = 100 * (bid - highestBuy) / highestBuy;
-    sellIncreaseWin = 100 * (bid - lowestBuy) / lowestBuy;
-    buyIncrease = 100 * (bid - localMin) / localMin;
-    parameters = {lowestBuy, highestBuy, sellIncreaseLose, sellIncreaseWin, buyIncrease};
+    var sellIncreaseLose = 100 * (bid - highestBuy) / highestBuy;
+    var sellIncreaseWin = 100 * (bid - lowestBuy) / lowestBuy;
+    var buyIncrease = 100 * (bid - localMin) / localMin;
+    var parameters = {lowestBuy, highestBuy, sellIncreaseLose, sellIncreaseWin, buyIncrease};
     return parameters;
 }
 
-function updateDecision(parameters) {
-    if ((openTrades.length < config.maxBuy) && (openTrades.length == 0 || lowestBuy > ask * (1 + config.multipleBuys / 100)) && (buyIncrease >= config.lowBuy) && (buyIncrease <= config.highBuy)) {
-        buyBalance = balance / (config.maxBuy - openTrades.length);
-        decision = {'type' : 'buy', 'price' : ask, 'quantity' : buyBalance};
-    }else if ((openTrades.length > 0) && (sellIncreaseWin >= config.sellPositive)) {
-        deleteIndex = openTrades.findIndex(i => i.value == lowestBuy);
-        sellBalance = openTrades[deleteIndex]['quantity'];
-        decision = {'type' : 'sell', 'price' : lowestBuy * (1 + config.sellPositive / 100), 'quantity' : sellBalance, 'index' : deleteIndex};
-    }else if ((openTrades.length > 0) && (sellIncreaseLose <= config.sellNegative)) {
-        deleteIndex = openTrades.findIndex(i => i.value == highestBuy);
-        sellBalance = openTrades[deleteIndex]['quantity'];
-        if (nextbid < bid) {
-            bid = nextbid;
+//n -> input, p -> parameters
+function updateDecision(n, p) {
+    var decision = {'type' : 'standby'}
+
+    if ((n.openTrades.length < config.maxBuy) && (n.openTrades.length == 0 || 
+            p.lowestBuy > n.ask * (1 + config.multipleBuys / 100)) && (p.buyIncrease >= config.lowBuy) && 
+            (p.buyIncrease <= config.highBuy)) {
+
+        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
+        decision = {'type' : 'buy', 'price' : n.ask, 'quantity' : buyBalance};
+
+    } else if ((n.openTrades.length > 0) && (p.sellIncreaseWin >= config.sellPositive)) {
+
+        var deleteIndex = n.openTrades.findIndex(i => i.value == p.lowestBuy);
+        var sellBalance = n.openTrades[deleteIndex]['quantity'];
+        decision = {'type' : 'sell', 'price' : p.lowestBuy * (1 + config.sellPositive / 100), 
+            'quantity' : sellBalance, 'index' : deleteIndex};
+
+    } else if ((n.openTrades.length > 0) && (p.sellIncreaseLose <= config.sellNegative)) {
+
+        var deleteIndex = n.openTrades.findIndex(i => i.value == p.highestBuy);
+        var sellBalance = n.openTrades[deleteIndex]['quantity'];
+        var bid = n.bid;
+        if (n.nextbid < bid) {
+            bid = n.nextbid;
         }
         decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
-    }else {
-        decision = {'type' : 'standby', 'price' : 0, 'quantity' : 0};
+
+    } else {
+        decision = {'type' : 'standby'}
     }
     return decision;
 }
 
-exports.decide = function(values) {
-    updateHistory();
-    updateLocalMinimum();
-    updateBuys();
-    decision = updateDecision(parameters);
+// input -> {bid, nextbid, ask, value, openTrades, balance}
+// output -> {type, price, quantity, index};
+exports.decide = function(input) {
+    updateHistory(input.value);
+    updateLocalMinimum(input.value);
+    var parameters = updateBuys(input.bid, input.openTrades);
+    var decision = updateDecision(input, parameters);
     return decision;
 }

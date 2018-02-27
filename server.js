@@ -26,11 +26,12 @@ io.on('connection', function(socket){
 
 // Bot init
 api.initialize(pair = 'XRPUSD');
+var apiState = api.getApiState();
 
-while (api.index < api.historic.length){
+while (apiState.index < apiState.historic.length){
     var values = api.getValues();
     var decision = ia.decide(values);
     api.execute(decision);
 }
 
-console.log(api.tradeHistory.map(a => a.balance));
+console.log(apiState.tradeHistory.map(a => a.balance));

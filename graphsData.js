@@ -1,4 +1,4 @@
-api = require('./apiWrapper');
+var api = require('./apiWrapper').getApiState();
 
 var chartColors = {
     blue: 'rgb(54, 162, 235)',
