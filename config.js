@@ -7,7 +7,5 @@ module.exports = {
     lowBuy: 0.01,       // Minimum percentage difference with the local low to open a trade.
     highBuy: 1.5,       // Maximum percentage difference with the local low to open a trade.
     maxBuy: 1,          // Maximum number of simultaneous trades.
-    multipleBuys: 10,   // Percentage decrease that needs to happen before the next buy order can be placed, considering that there is already one trade opened.
-    realMode: false,
-    timer: 15000
+    multipleBuys: 10    // Percentage decrease that needs to happen before the next buy order can be placed, considering that there is already one trade opened.
 }

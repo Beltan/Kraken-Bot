@@ -5,34 +5,11 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-
-/* The idea here is to pass bid, ask, openTrades, buyPrice...
- you shouldn't ask nothing to the api, therefore there shouldn't be any,
- api.whatever. If you need them, pass them by parameter, and NEVER modify them,
- the api should be responsible about that.
-
- Also the returned decision should be like an instruction:
- {decision : "buy", buyOrder: value, placeOrder : value}
- and you are like ordering to the api what it should do: I want you to buy an order with this value,
- and if there aren't any, then place one to this value.
- THIS WAS JUST AN EXAMPLE, you can think a little what is the best "instruction"! ;)
-*/
-
-/* Localhistory should be a private var used by the IA, it should be declared and only modified
- inside this class:
-
 var localHistory = [];
+var nextDeletion = 0;
+var localMin = Infinity;
 
-and also have a init function, so we can init it if we want!!
-
-exports.init = function(history) {
-    localHistory = history;
-}
-
-PLEAE FOR THE SAKE OF CLARITY do smaller functions with smaller responsabilities.
-One could be:
-
-function updateHistory(value) {
+function updateHistory() {
     if (localHistory.length < config.local){
         localHistory.push(value);
     }else{
@@ -41,74 +18,67 @@ function updateHistory(value) {
     }
 }
 
-and another
-
-function getMinimumLocal() {
-    localMin = Infinity;
-    for (j = 0; j < ia.localHistory.length; j++) {
-        if (ia.localMin > ia.localHistory[j]){
-            ia.localMin = ia.localHistory[j]
+function updateLocalMinimum() {
+    if (nextDeletion == localMin) {
+        localMin = Infinity;
+        for (j = 0; j < localHistory.length; j++) {
+            if (localMin > localHistory[j]){
+                localMin = localHistory[j];
+            }
+        }
+    }else {
+        if (localMin > value) {
+            localMin = value;
         }
     }
-
-    return localMin;
+    nextDeletion = localHistory[0];
 }
 
- that but the way, the avobe function is very inneficient, there is a clever way of 
- maintaining the local minimum, but that's out of the scope of this comments :P 
-
- There are some more cases... that would be nice to have a function
-
-*/
-
-exports.decide = function({bid, ask}) {
-    
-    value = (bid + ask) / 2;
-    if (ia.localHistory.length < config.local){
-        ia.localHistory.push(value);
-    }else{
-        ia.localHistory.shift();
-        ia.localHistory.push(value);
+function updateBuys() {
+    if (0 <= openTrades.length) {
+        lowestBuy = Infinity;
+        highestBuy = 0;
     }
-    ia.localMin = Infinity;
-    for (j = 0; j < ia.localHistory.length; j++) {
-        if (ia.localMin > ia.localHistory[j]){
-            ia.localMin = ia.localHistory[j]
+    for (i = 0; i < openTrades.length; i++) {
+        if (openTrades[i]['value'] <= lowestBuy) {
+            lowestBuy = openTrades[i]['value'];
+        }
+        if (openTrades[i]['value'] >= highestBuy) {
+            highestBuy = openTrades[i]['value'];
         }
     }
-    if (0 < api.openTrades.length) {
-        api.lowestBuy = Infinity;
-        api.highestBuy = 0;
-    }
-    for (i = 0; i < api.openTrades.length; i++) {
-        if (api.openTrades[i]['value'] <= api.lowestBuy) {
-            api.lowestBuy = api.openTrades[i]['value'];
+    sellIncreaseLose = 100 * (bid - highestBuy) / highestBuy;
+    sellIncreaseWin = 100 * (bid - lowestBuy) / lowestBuy;
+    buyIncrease = 100 * (bid - localMin) / localMin;
+    parameters = {lowestBuy, highestBuy, sellIncreaseLose, sellIncreaseWin, buyIncrease};
+    return parameters;
+}
+
+function updateDecision(parameters) {
+    if ((openTrades.length < config.maxBuy) && (openTrades.length == 0 || lowestBuy > ask * (1 + config.multipleBuys / 100)) && (buyIncrease >= config.lowBuy) && (buyIncrease <= config.highBuy)) {
+        buyBalance = balance / (config.maxBuy - openTrades.length);
+        decision = {'type' : 'buy', 'price' : ask, 'quantity' : buyBalance};
+    }else if ((openTrades.length > 0) && (sellIncreaseWin >= config.sellPositive)) {
+        deleteIndex = openTrades.findIndex(i => i.value == lowestBuy);
+        sellBalance = openTrades[deleteIndex]['quantity'];
+        decision = {'type' : 'sell', 'price' : lowestBuy * (1 + config.sellPositive / 100), 'quantity' : sellBalance, 'index' : deleteIndex};
+    }else if ((openTrades.length > 0) && (sellIncreaseLose <= config.sellNegative)) {
+        deleteIndex = openTrades.findIndex(i => i.value == highestBuy);
+        sellBalance = openTrades[deleteIndex]['quantity'];
+        if (nextbid < bid) {
+            bid = nextbid;
         }
-        if (api.openTrades[i]['value'] >= api.highestBuy) {
-            api.highestBuy = api.openTrades[i]['value'];
-        }
-    }
-    ia.sellIncreaseLose = 100 * (bid - api.highestBuy) / api.highestBuy;
-    ia.sellIncreaseWin = 100 * (bid - api.lowestBuy) / api.lowestBuy;
-    ia.buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
-    if ((api.buyCounter < config.maxBuy) && (api.buyCounter == 0 || api.lowestBuy > ask * (1 + config.multipleBuys / 100)) && (ia.buyIncrease >= config.lowBuy) && (ia.buyIncrease <= config.highBuy)) {
-        decision = 'buy';
-        api.buyPrice = ask;
-    }else if ((api.buyCounter > 0) && (ia.sellIncreaseWin >= config.sellPositive)) {
-        decision = 'sell';
-        api.sellPrice = bid;
-        deleteIndex = api.openTrades.findIndex(i => i.value == api.lowestBuy);
-        api.sellBalance = api.openTrades[deleteIndex]['quantity'];
-        api.openTrades.splice(deleteIndex, 1);
-    }else if ((api.buyCounter > 0) && (ia.sellIncreaseLose <= config.sellNegative)) {
-        decision = 'sell';
-        api.sellPrice = bid;
-        deleteIndex = api.openTrades.findIndex(i => i.value == api.highestBuy);
-        api.sellBalance = api.openTrades[deleteIndex]['quantity'];
-        api.openTrades.splice(deleteIndex, 1);
+        decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
     }else {
-        decision = 'standby';
+        decision = {'type' : 'standby', 'price' : 0, 'quantity' : 0};
     }
-    api.decision = decision;
+    return decision;
+}
+
+exports.decide = function(values) {
+    updateHistory();
+    updateLocalMinimum();
+    updateBuys();
+    decision = updateDecision(parameters);
     return decision;
 }

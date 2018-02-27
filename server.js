@@ -27,17 +27,10 @@ io.on('connection', function(socket){
 // Bot init
 api.initialize(pair = 'XRPUSD');
 
-if (config.realMode) {
-    setInterval (api.depth, config.timer);
-    setInterval (api.getValues, config.timer);
-    setInterval (function() {ia.decide({bid, ask});}, config.timer);
-    setInterval (function() {ia.decide({decision});}, config.timer);
-}else {
-    while (api.index < api.historic.length){
-        api.getValues();
-        ia.decide({bid, ask});
-        api.execute(decision);
-    }
+while (api.index < api.historic.length){
+    var values = api.getValues();
+    var decision = ia.decide(values);
+    api.execute(decision);
 }
 
 console.log(api.tradeHistory.map(a => a.balance));
