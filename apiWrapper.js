@@ -28,11 +28,9 @@ exports.execute = function(decision) {
 }
 
 exports.getValues = function() {
-    if (api.historic.length > 0){
-        if (api.index < api.historic.length){
-            api.index++;
-            value = api.historic[api.index];
-        }
+    if (api.index < api.historic.length){
+        api.index++;
+        value = api.historic[api.index];
     }
 
     var bid = value * 0.9995;
@@ -45,14 +43,14 @@ exports.getValues = function() {
 }
 
 exports.initialize = function(pair) {
-    api.balance = {'USD' : 50, 'XRP' : 0};
+    api.pair = pair;
+    api.first = pair.substring(0, 3);
+    api.second = pair.substring(3, 6);
+    api.balance = {[api.second] : 50, [api.first] : 0};
     api.index = -1;
     api.tradeHistory = [];
     api.openTrades = [];
     api.historic = [];
-    api.pair = pair;
-    api.first = pair.substring(0, 3);
-    api.second = pair.substring(3, 6);
 
     this.csvToArray();
 }
