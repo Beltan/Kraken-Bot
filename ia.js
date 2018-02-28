@@ -81,8 +81,6 @@ function updateDecision(n, p) {
         }
         decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
 
-    } else {
-        decision = {'type' : 'standby'}
     }
     return decision;
 }
