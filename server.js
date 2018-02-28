@@ -34,4 +34,4 @@ while (apiState.index < apiState.historic.length){
     api.execute(decision);
 }
 
-console.log(apiState.tradeHistory.map(a => a.balance));
+console.log(apiState.tradeHistory.map(a => JSON.stringify(a)));

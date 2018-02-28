@@ -10,7 +10,7 @@ var api = {};
 exports.execute = function(decision) {
    
     if (decision.type == 'buy') {
-        commission = decision.quantity * 0.0015;
+        var commission = decision.quantity * 0.0015;
         decision.quantity = decision.quantity - commission;
         api.balance[api.second] = api.balance[api.second] - commission - decision.quantity;
         api.balance[api.first] = api.balance[api.first] + decision.quantity / decision.price;
@@ -18,7 +18,7 @@ exports.execute = function(decision) {
         api.tradeHistory.push(history);
         api.openTrades.push(history);
     } else if (decision.type == 'sell') {
-        commission = decision.quantity * decision.price * 0.0015;
+        var commission = decision.quantity * decision.price * 0.0015;
         api.balance[api.second] = api.balance[api.second] + decision.quantity * decision.price - commission;
         api.balance[api.first] = api.balance[api.first] - decision.quantity;
         var history = {'type' : 'sell', 'value' : decision.price, 'quantity' : decision.quantity, 'commission' : commission, 'balance' : api.balance[api.second] + api.balance[api.first] * decision.price};
@@ -28,6 +28,7 @@ exports.execute = function(decision) {
 }
 
 exports.getValues = function() {
+    var value;
     if (api.index < api.historic.length){
         api.index++;
         value = api.historic[api.index];
