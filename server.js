@@ -8,6 +8,7 @@ var io = require('socket.io')(http);
 // Bot requires
 api = require('./apiWrapper');
 ia = require('./ia');
+launcher = require('./main');
 
 // Graphs requires
 graph = require('./graphsData');
@@ -24,14 +25,8 @@ io.on('connection', function(socket){
     socket.emit("chartData", graph.getHistoricGraph("value"));
 });
 
-// Bot init
-api.initialize(pair = 'XRPUSD');
+// Bot launch
 var apiState = api.getApiState();
-
-while (apiState.index < apiState.historic.length){
-    var values = api.getValues();
-    var decision = ia.decide(values);
-    api.execute(decision);
-}
+launcher.main(apiState);
 
 console.log(apiState.tradeHistory.map(a => JSON.stringify(a)));
