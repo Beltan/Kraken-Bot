@@ -23,8 +23,8 @@ exports.getHistoric = async function() {
 }
     
 exports.historic = async function() {
-    pair = getHistoric.pair;
-    since = getHistoric.last;
+    var pair = getHistoric.pair;
+    var since = getHistoric.last;
     await kraken.api('Trades', {pair, since}, functions.printResultsHistoric);
 }
 
