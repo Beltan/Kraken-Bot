@@ -11,8 +11,9 @@ if no order placed and buy conditions -> place buy order
 if no order placed and no buy conditions -> stand by
 if buy order placed and buy conditions -> update buy order
 if buy order placed and no buy conditions -> cancel buy order
-if buy order filled and no buy conditions -> place sell order
-if buy order filled and buy conditions and more than one buy is enabled -> place buy and sell orders
+if buy order filled -> place sell order
+if sell order placed and buy conditions and multiple buys enabled -> place buy order
+if sell order placed and no buy conditions -> standby
 if sell order filled and no buy conditions -> standby
 if sell order filled and buy conditions -> place buy order
 if buy order pending and buy conditions -> standby
