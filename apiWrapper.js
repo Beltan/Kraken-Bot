@@ -11,18 +11,20 @@ exports.execute = function(decision) {
 
     if (decision.type == 'buy') {
         var commission = decision.quantity * 0.0015;
-        decision.quantity = decision.quantity - commission;
-        api.balance[api.second] = api.balance[api.second] - commission - decision.quantity;
-        api.balance[api.first] = api.balance[api.first] + decision.quantity / decision.price;
-        var history = {'type' : 'buy', 'value' : decision.price, 'quantity' : decision.quantity / decision.price, 'commission' : commission, 'balance' : api.balance[api.first] + api.balance[api.second] / decision.price};
+        var quantity = decision.quantity - commission;
+        api.balance[api.second] = api.balance[api.second] - commission - quantity;
+        api.balance[api.first] = api.balance[api.first] + quantity / decision.price;
+        var history = {'position' : api.tradeHistory.length, 'buyPrice' : decision.price, 'quantity' : quantity / decision.price, 'buyCommission' : commission, 'balanceCrypto' : api.balance[api.first]};
         api.tradeHistory.push(history);
         api.openTrades.push(history);
     } else if (decision.type == 'sell') {
         var commission = decision.quantity * decision.price * 0.0015;
         api.balance[api.second] = api.balance[api.second] + decision.quantity * decision.price - commission;
         api.balance[api.first] = api.balance[api.first] - decision.quantity;
-        var history = {'type' : 'sell', 'value' : decision.price, 'quantity' : decision.quantity, 'commission' : commission, 'balance' : api.balance[api.second] + api.balance[api.first] * decision.price};
-        api.tradeHistory.push(history);
+        var index = api.openTrades[decision.index].position;
+        var percentage = 100 * ((decision.price - api.tradeHistory[index]['buyPrice']) / api.tradeHistory[index]['buyPrice']);
+        var history = {'sellPrice' : decision.price, 'sellCommission' : commission, 'balanceFiat' : api.balance[api.second], 'netPercentage' : percentage};
+        Object.assign(api.tradeHistory[index], history);
         api.openTrades.splice(decision.index, 1);
     }
 }
