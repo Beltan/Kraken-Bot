@@ -55,7 +55,7 @@ function updateBuys(bid, openTrades) {
 
 //n -> input, p -> parameters
 function updateDecision(n, p) {
-    var decision = {'type' : 'standby'}
+    var decision = {'type' : 'standby'};
 
     if ((n.openTrades.length < config.maxBuy) && (n.openTrades.length == 0 || 
             p.lowestBuy > n.ask * (1 + config.multipleBuys / 100)) && (p.buyIncrease >= config.lowBuy) && 
@@ -76,16 +76,13 @@ function updateDecision(n, p) {
         var deleteIndex = n.openTrades.findIndex(i => i.value == p.highestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
         var bid = n.bid;
-        if (n.nextbid < bid) {
-            bid = n.nextbid;
-        }
         decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
 
     }
     return decision;
 }
 
-// input -> {bid, nextbid, ask, value, openTrades, balance}
+// input -> {bid, ask, value, openTrades, balance}
 // output -> {type, price, quantity, index};
 exports.decide = function(input) {
     updateHistory(input.value);
