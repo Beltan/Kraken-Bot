@@ -76,16 +76,13 @@ function updateDecision(n, p) {
         var deleteIndex = n.openTrades.findIndex(i => i.value == p.highestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
         var bid = n.bid;
-        if (n.nextbid < bid) {
-            bid = n.nextbid;
-        }
         decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
 
     }
     return decision;
 }
 
-// input -> {bid, nextbid, ask, value, openTrades, balance}
+// input -> {bid, ask, value, openTrades, balance}
 // output -> {type, price, quantity, index};
 exports.decide = function(input) {
     updateHistory(input.value);

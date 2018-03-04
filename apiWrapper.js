@@ -36,10 +36,9 @@ exports.getValues = function() {
 
     var bid = value * 0.9995;
     var ask = value * 1.0005;
-    var nextbid = api.historic[api.index + 1] * 0.9995;
     var openTrades = api.openTrades;
     var balance = api.balance[api.second];
-    var values = {bid, nextbid, ask, value, openTrades, balance};
+    var values = {bid, ask, value, openTrades, balance};
     return values;
 }
 
