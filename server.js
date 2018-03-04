@@ -22,6 +22,7 @@ http.listen(3000, function() {
 io.on('connection', function(socket){
 	socket.on('disconnect', function() {});
     socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell"));
+    socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell", "logarithmic"));
     socket.emit("chartData", graph.getHistoricGraph("value"));
 });
 
@@ -30,3 +31,4 @@ var apiState = api.getApiState();
 launcher.main(apiState);
 
 console.log(apiState.tradeHistory.map(a => JSON.stringify(a)));
+

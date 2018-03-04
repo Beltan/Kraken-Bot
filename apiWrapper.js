@@ -8,7 +8,7 @@ const kraken = new KrakenClient(key, secret);
 var api = {};
 
 exports.execute = function(decision) {
-   
+
     if (decision.type == 'buy') {
         var commission = decision.quantity * 0.0015;
         decision.quantity = decision.quantity - commission;

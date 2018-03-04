@@ -20,16 +20,25 @@ function getRandomColor() {
     return values[i % values.length];
 }
 
-function getOption(key, def, i, options) {
+function getOption(key, def, options, i = null) {
+
     var option = def;
-    if(i < options.length && key in options[i]) 
+    
+    if(i == null && key in options) {
+        option = options[key];
+    }
+    else if(i in options && key in options[i]) {
         option = options[i][key];
+    }
 
     return option;
 }
 
-function graphObject(id, datasets, length) {
-    return {
+function graphObject(id, datasets, length, options) {
+
+    var scale = getOption("scaleY", "linear", options)
+
+    var obj = {
         id : id.replace(/\s+/g, ''),
         type: 'line',
         data: {
@@ -44,6 +53,7 @@ function graphObject(id, datasets, length) {
                     }
                 }],
                 yAxes: [{
+                    type: scale,
                     ticks: {
                         beginAtZero:true
                     },
@@ -54,9 +64,11 @@ function graphObject(id, datasets, length) {
             }
         }
     };
+
+    return obj;
 }
 
-exports.getGraph = function(id, data, key = null, options = [], filters = []) {
+exports.getGraph = function(id, data, key = null, options = {}, filters = []) {
 
     if(filters.length == 0) {
         filters.push(a => true);
@@ -72,10 +84,10 @@ exports.getGraph = function(id, data, key = null, options = [], filters = []) {
             newValues = newValues.map(a => a[key]);
 
         //get the color
-        var color = getOption("color", getColorIndex(i), i, options);
+        var color = getOption("color", getColorIndex(i), options, i);
 
         //get the label
-        var label = getOption("label", id + ":" + i, i, options);
+        var label = getOption("label", id + ":" + i, options, i);
 
         datasets.push({
             label: label,
@@ -87,7 +99,7 @@ exports.getGraph = function(id, data, key = null, options = [], filters = []) {
             maxLength = newValues.length;
     }
    
-    return graphObject(id, datasets, maxLength);
+    return graphObject(id, datasets, maxLength, options);
     
 }
 
@@ -100,7 +112,7 @@ var getBasicFilterFunction = function(column, value, negate = false) {
     return filterFunction;
 }
 
-exports.getHistoricGraph = function(column, filterColumn = null, filterValue = null) {
+exports.getHistoricGraph = function(column, filterColumn = null, filterValue = null, scale = null) {
     var name = "Historic " + column;
 
     var filterFunctions = [];
@@ -111,6 +123,12 @@ exports.getHistoricGraph = function(column, filterColumn = null, filterValue = n
         filterFunctions.push(filterFunction1);
         filterFunctions.push(filterFunction2);
     }
+
+    var options = {};
+    if(scale != null) {
+        options.scaleY = scale;
+        name += " (scaled)"
+    }
   
-    return this.getGraph(name, api.tradeHistory, column, [], filterFunctions);
+    return this.getGraph(name, api.tradeHistory, column, options, filterFunctions);
 }
