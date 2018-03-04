@@ -24,11 +24,9 @@ io.on('connection', function(socket){
     socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell"));
     socket.emit("chartData", graph.getHistoricGraph("balance", "type", "sell", "logarithmic"));
     socket.emit("chartData", graph.getHistoricGraph("value"));
+    socket.emit("stateData", launcher.state());
 });
 
 // Bot launch
-var apiState = api.getApiState();
-launcher.main(apiState);
-
-console.log(apiState.tradeHistory.map(a => JSON.stringify(a)));
+launcher.main();
 

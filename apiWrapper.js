@@ -30,8 +30,8 @@ exports.execute = function(decision) {
 exports.getValues = function() {
     var value;
     if (api.index < api.historic.length){
-        api.index++;
         value = api.historic[api.index];
+        api.index++;        
     }
 
     var bid = value * 0.9995;
@@ -47,7 +47,7 @@ exports.initialize = function(pair) {
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);
     api.balance = {[api.second] : 50, [api.first] : 0};
-    api.index = -1;
+    api.index = 0;
     api.tradeHistory = [];
     api.openTrades = [];
     api.historic = [];
@@ -61,5 +61,10 @@ exports.csvToArray = function() {
 }
 
 exports.getApiState = function() {
-    return api;
+    // Returns a copy of the state of the api
+    return JSON.parse(JSON.stringify(api));
+}
+
+exports.continue = function() {
+    return api.index < api.historic.length;
 }

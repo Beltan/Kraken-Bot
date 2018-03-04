@@ -6,13 +6,18 @@ window.onload = function(){
         '<canvas id="myChart{id}" width="100" height="100"></canvas>' +
     '</div>';
 
-    var container = document.getElementById("chartsDiv");
+    var dataHtml = '<div card class="col-6">' +
+        '{name} : {value}' +
+    '</div>';
+
+    var chartsContainer = document.getElementById("chartsDiv");
+    var infoContainer = document.getElementById("stateInfo");
 
     function createNewChart(config) {
         // add new canvas
         var id = config.id;
         var newHtml = graphHtml.replace("{id}", id);
-        container.insertAdjacentHTML('beforeend', newHtml);
+        chartsContainer.insertAdjacentHTML('beforeend', newHtml);
 
         //fill the data chart
         var ctx = document.getElementById("myChart" + id).getContext('2d');
@@ -33,5 +38,17 @@ window.onload = function(){
         else {
             createNewChart(config);
         }
+    });
+
+    socket.on('stateData', function(data){
+        console.log(data);
+        var newHtml = "";
+        for (var k in data){
+            if (typeof data[k] !== 'function') {
+                var html = dataHtml.replace("{name}", k);
+                newHtml += html.replace("{value}", JSON.stringify(data[k]));
+            }
+        }
+        infoContainer.innerHTML = newHtml;
     });
 }
