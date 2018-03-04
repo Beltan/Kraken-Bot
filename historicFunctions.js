@@ -15,17 +15,17 @@ exports.initialize = function(pair) {
     getHistoric.last = 10000;
 }
 
-exports.getHistoric = async function() {
+exports.getHistoric = function() {
     if (fs.existsSync('./LastID' + getHistoric.pair + '.txt')){
         getHistoric.last = fs.readFileSync('./LastID' + getHistoric.pair + '.txt', 'utf8');
     }
-    await functions.historic();
+    functions.historic();
 }
     
-exports.historic = async function() {
+exports.historic = function() {
     var pair = getHistoric.pair;
     var since = getHistoric.last;
-    await kraken.api('Trades', {pair, since}, functions.printResultsHistoric);
+    kraken.api('Trades', {pair, since}, functions.printResultsHistoric);
 }
 
 exports.printResultsHistoric = function(error, data) {
