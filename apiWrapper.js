@@ -22,7 +22,7 @@ exports.execute = function(decision) {
         api.balance[api.second] = api.balance[api.second] + decision.quantity * decision.price - commission;
         api.balance[api.first] = api.balance[api.first] - decision.quantity;
         var index = api.openTrades[decision.index].position;
-        var percentage = 100 * ((decision.price - api.tradeHistory[index]['buyPrice']) / api.tradeHistory[index]['buyPrice']);
+        var percentage = 100 * ((decision.price * decision.quantity - commission - (api.tradeHistory[index]['buyPrice'] * api.tradeHistory[index]['quantity']) - api.tradeHistory[index]['buyCommission']) / (api.tradeHistory[index]['buyPrice'] * api.tradeHistory[index]['quantity']));
         var history = {'sellPrice' : decision.price, 'sellCommission' : commission, 'balanceFiat' : api.balance[api.second], 'netPercentage' : percentage};
         Object.assign(api.tradeHistory[index], history);
         api.openTrades.splice(decision.index, 1);
