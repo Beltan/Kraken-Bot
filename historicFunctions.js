@@ -16,8 +16,8 @@ exports.initialize = function(pair) {
 }
 
 exports.getHistoric = function() {
-    if (fs.existsSync('./LastID' + getHistoric.pair + '.txt')){
-        getHistoric.last = fs.readFileSync('./LastID' + getHistoric.pair + '.txt', 'utf8');
+    if (fs.existsSync('./historics/LastID' + getHistoric.pair + '.txt')){
+        getHistoric.last = fs.readFileSync('./historics/LastID' + getHistoric.pair + '.txt', 'utf8');
     }
     functions.historic();
 }
@@ -40,8 +40,8 @@ exports.printResultsHistoric = function(error, data) {
             tempData[m] = tempData[m][0];
         }
         tempData.unshift('');
-        var pairName = getHistoric.pair + '.csv';
-        var lastID = 'LastID' + getHistoric.pair + '.txt';
+        var pairName = './historics/' + getHistoric.pair + '.csv';
+        var lastID = './historics/LastID' + getHistoric.pair + '.txt';
         functions.write(pairName, tempData);
         functions.overwrite(lastID, getHistoric.last);
         console.log('File Updated to ' + getHistoric.last);
