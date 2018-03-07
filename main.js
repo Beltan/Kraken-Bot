@@ -1,4 +1,4 @@
-api = require('./apiWrapper');
+api = require('./api/apiWrapper');
 ia = require('./ia');
 
 var data = [];

@@ -6,8 +6,6 @@ app.use(express.static('public'));
 var io = require('socket.io')(http);
 
 // Bot requires
-api = require('./apiWrapper');
-ia = require('./ia');
 launcher = require('./main');
 
 // Graphs requires
