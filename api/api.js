@@ -5,3 +5,6 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+exports.continue = function() {
+    return true;
+}
