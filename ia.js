@@ -1,9 +1,5 @@
-config = require('./config');
+config = require('./config').ia;
 const fs = require('fs');
-const KrakenClient = require('kraken-api');
-const key = config.key; // API Key
-const secret = config.secret; // API Private Key
-const kraken = new KrakenClient(key, secret);
 
 var localHistory = [];
 var lastDeleted;

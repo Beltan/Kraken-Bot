@@ -1,4 +1,4 @@
-config = require('./config');
+config = require('./config').api;
 getHistoric = require('./getHistoric');
 const fs = require('fs');
 const KrakenClient = require('kraken-api');

@@ -1,0 +1,1 @@
+const KrakenClient = require('kraken-api');
