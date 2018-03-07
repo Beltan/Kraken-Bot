@@ -33,46 +33,6 @@ function updateLocalMinimum(value) {
     }
 }
 
-/*
-//n -> input, p -> parameters
-function updateDecision(n, p) {
-    var decision = {'type' : 'standby'};
-    var buyConditions = false;
-    if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
-        buyConditions = true;
-    }
-    if ((orderStatus == 'no orders placed') && buyConditions) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.ask, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order placed') && buyConditions) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'update buy order', 'price' : n.ask, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order placed') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
-    }else if (orderStatus == 'buy order filled') {
-        var deleteIndex = n.openTrades.findIndex(i => i.value == p.lowestBuy);
-        var sellBalance = n.openTrades[deleteIndex]['quantity'];
-        decision = {'type' : 'place sell order', 'price' : p.lowestBuy * (1 + config.sellPositive / 100), 
-            'quantity' : sellBalance};
-    }else if ((orderStatus == 'sell order placed') && buyConditions && (n.openTrades.length < config.maxBuy)) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.ask, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'sell order filled') && buyConditions) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.ask, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order pending') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
-    }else if ((orderStatus == 'buy order partial fill') && buyConditions && pendingBuy > config.krakenMin * n.ask) {
-        var buyBalance = pendingBuy;
-        decision = {'type' : 'update buy order', 'price' : n.ask, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order partial fill') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
-    }
-
-    return decision;
-}
-*/
-
 function updateBuys(bid, openTrades) {
 
     var lowestBuy = Infinity;
