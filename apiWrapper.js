@@ -58,7 +58,7 @@ exports.initialize = function(pair) {
 }
 
 exports.csvToArray = function() {
-    var stuff = fs.readFileSync('./' + api.pair + '.csv', 'utf8');
+    var stuff = fs.readFileSync('./historics/' + api.pair + '.csv', 'utf8');
     api.historic = stuff.split(',');
 }
 
