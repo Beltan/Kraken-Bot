@@ -61,9 +61,13 @@ function updateOrderStatus() {
 function updateDecision(n, p) {
     var decision = {'type' : 'standby'};
     var buyConditions = false;
+
+    // function that decides and returns a boolean whether the buyConditions are met or not?
     if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
         buyConditions = true;
     }
+
+    // buy balance is repetead lot's of times..
     if ((orderStatus == 'no orders placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
         decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
