@@ -70,30 +70,31 @@ function updateOrderStatus(n) {
     return orderStatus;
 }
 
+function buyConditions(p) {
+    var buyConditions = false;
+    if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
+        buyConditions = true;
+    }
+    return buyConditions;
+}
+
 // pending to init config.spread and config.krakenMin depending on the name of the crypto traded.
-// pending to init orderStatus to no orders placed.
 
 //n -> input, p -> parameters
 function updateDecision(n, p, orderStatus) {
     var decision = {'type' : 'standby'};
-    var buyConditions = false;
+    var buyConditions = buyConditions (p);
 
-    // function that decides and returns a boolean whether the buyConditions are met or not? well done Sherlock
-    if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
-        buyConditions = true;
-    }
-    
-    // !buyConditions always ends up canceling buy order in case that there is one. Reorder code so it is nicer
-    // buy balance is repetead lot's of times.. so what!?
+    // buy balance is repetead lot's of times..
     if (orderStatus == 'standby') {
+    }else if (!buyConditions && (orderStatus == 'buy order placed' || orderStatus == 'buy order pending' || orderStatus == 'buy order partial fill')) {
+        decision = {'type' : "cancel buy order"};
     }else if ((orderStatus == 'no orders placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
         decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
     }else if ((orderStatus == 'buy order placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
         decision = {'type' : 'update buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order placed') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
     }else if (orderStatus == 'buy order filled') {
         var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.lowestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
@@ -102,13 +103,9 @@ function updateDecision(n, p, orderStatus) {
     }else if ((orderStatus == 'sell order placed') && buyConditions && (n.openTrades.length < config.maxBuy)) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
         decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order pending') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
     }else if ((orderStatus == 'buy order partial fill') && buyConditions && pendingBuy > (config.krakenMin * (n.bid + config.spread))) {
         var buyBalance = pendingBuy;
         decision = {'type' : 'update buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order partial fill') && !buyConditions) {
-        decision = {'type' : 'cancel buy order'};
     }
     return decision;
 }
