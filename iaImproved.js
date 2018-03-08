@@ -56,14 +56,16 @@ function updateOrderStatus(n) {
         orderStatus = 'no orders placed';
     }else if (n.openTrades.length == 0 && n.openBuyOrders.length > 0) {
         orderStatus = 'buy order placed';
-    }else if (n.openTrades.length > 0 && n.openBuyOrders.length == 0 && (n.openTrades.length > n.openSellOrders.length)) {
+    }else if (n.openTrades.length > 0 && (n.openTrades.length == n.openBuyOrders.length)) {
         orderStatus = 'buy order filled';
-    }else if (n.openTrades.length > 0 && n.openSellOrders.length > 0 && (n.openTrades.length == n.openSellOrders.length)) {
+    }else if (n.openTrades.length > 0 && (n.openTrades.length == n.openSellOrders.length)) {
         orderStatus = 'sell order placed';
     }else if (n.openBuyOrders.length > 0 && (n.openTrades.length < n.openBuyOrders.length)) {
-        orderStatus = 'buy order pending';
-    }else if (missingVolume != 0 && executedVolume != 0) {
+        if (pendingBuy != 0 && executedVolume != 0){
         orderStatus = 'buy order partial fill';
+        }else {
+        orderStatus = 'buy order pending';
+        }
     }
     return orderStatus;
 }
@@ -80,7 +82,8 @@ function updateDecision(n, p, orderStatus) {
     if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
         buyConditions = true;
     }
-
+    
+    // !buyConditions always ends up canceling buy order in case that there is one. Reorder code so it is nicer
     // buy balance is repetead lot's of times.. so what!?
     if (orderStatus == 'standby') {
     }else if ((orderStatus == 'no orders placed') && buyConditions) {
@@ -107,7 +110,6 @@ function updateDecision(n, p, orderStatus) {
     }else if ((orderStatus == 'buy order partial fill') && !buyConditions) {
         decision = {'type' : 'cancel buy order'};
     }
-
     return decision;
 }
 
