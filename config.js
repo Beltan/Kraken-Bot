@@ -13,5 +13,9 @@ module.exports.ia = {
     maxBuy: 1,          // Maximum number of simultaneous trades.
     multipleBuys: 10,   // Percentage decrease that needs to happen before the next buy order can be placed, considering that there is already one trade opened.
     krakenMinXRP: 30,   // Minimum XRP that can be traded
-    spreadXRP: 0.0001   // Minimum XRP spread
+    spreadXRP: 0.0001,  // Minimum XRP spread
+    krakenMinXBT: 0.002,// Minimum XBT that can be traded
+    spreadXBT: 0.01,    // Minimum XBT spread
+    krakenMinETH: 0.02, // Minimum ETH that can be traded
+    spreadETH: 0.001    // Minimum ETH spread
 }

@@ -1,31 +1,28 @@
 config = require('./config').ia;
 const fs = require('fs');
 
-var localHistory = [];
-var lastDeleted;
-var localMin = Infinity;
-var pendingBuy = 0;
+var ia = {};
 
 function updateHistory(value) {
-    if (localHistory.length < config.local){
-        localHistory.push(value);
+    if (ia.localHistory.length < config.local){
+        ia.localHistory.push(value);
     }else{
-        lastDeleted = localHistory.shift();
-        localHistory.push(value);
+        ia.lastDeleted = ia.localHistory.shift();
+        ia.localHistory.push(value);
     }
 }
 
 function updateLocalMinimum(value) {
-    if (lastDeleted == localMin) {
-        localMin = Infinity;
-        for (j = 0; j < localHistory.length; j++) {
-            if (localMin > localHistory[j]){
-                localMin = localHistory[j];
+    if (ia.lastDeleted == ia.localMin) {
+        ia.localMin = Infinity;
+        for (j = 0; j < ia.localHistory.length; j++) {
+            if (ia.localMin > ia.localHistory[j]){
+                ia.localMin = ia.localHistory[j];
             }
         }
     }else {
-        if (localMin > value) {
-            localMin = value;
+        if (ia.localMin > value) {
+            ia.localMin = value;
         }
     }
 }
@@ -39,7 +36,7 @@ function updateBuys(bid, openTrades) {
             lowestBuy = openTrades[i]['buyPrice'];
         }
     }
-    var buyIncrease = 100 * (bid - localMin) / localMin;
+    var buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
     var parameters = {lowestBuy, buyIncrease};
     return parameters;
 }
@@ -49,7 +46,7 @@ function updateBuys(bid, openTrades) {
 // both vectors should contain additional parameters, mainly the openBuyOrders
 
 function updateOrderStatus(n) {
-    pendingBuy = n.openBuyOrders[n.openBuyOrders.length - 1]['missing volume'];
+    ia.pendingBuy = n.openBuyOrders[n.openBuyOrders.length - 1]['missing volume'];
     var executedVolume = n.openBuyOrders[n.openBuyOrders.length - 1]['executed volume'];
     var orderStatus = 'standby';
     if (n.openTrades.length == 0 && n.openBuyOrders.length == 0 && n.openSellOrders.length == 0) {
@@ -61,7 +58,7 @@ function updateOrderStatus(n) {
     }else if (n.openTrades.length > 0 && (n.openTrades.length == n.openSellOrders.length)) {
         orderStatus = 'sell order placed';
     }else if (n.openBuyOrders.length > 0 && (n.openTrades.length < n.openBuyOrders.length)) {
-        if (pendingBuy != 0 && executedVolume != 0){
+        if (ia.pendingBuy != 0 && executedVolume != 0){
         orderStatus = 'buy order partial fill';
         }else {
         orderStatus = 'buy order pending';
@@ -78,8 +75,6 @@ function buyConditions(p) {
     return buyConditions;
 }
 
-// pending to init config.spread and config.krakenMin depending on the name of the crypto traded.
-
 //n -> input, p -> parameters
 function updateDecision(n, p, orderStatus) {
     var decision = {'type' : 'standby'};
@@ -94,7 +89,7 @@ function updateDecision(n, p, orderStatus) {
         decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
     }else if ((orderStatus == 'buy order placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'update buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'update buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
     }else if (orderStatus == 'buy order filled') {
         var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.lowestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
@@ -102,10 +97,10 @@ function updateDecision(n, p, orderStatus) {
             'price2' : p.lowestBuy * (1 + config.sellNegative / 100), 'quantity' : sellBalance};
     }else if ((orderStatus == 'sell order placed') && buyConditions && (n.openTrades.length < config.maxBuy)) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order partial fill') && buyConditions && pendingBuy > (config.krakenMin * (n.bid + config.spread))) {
-        var buyBalance = pendingBuy;
-        decision = {'type' : 'update buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
+    }else if ((orderStatus == 'buy order partial fill') && buyConditions && ia.pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
+        var buyBalance = ia.pendingBuy;
+        decision = {'type' : 'update buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
     }
     return decision;
 }
@@ -119,4 +114,13 @@ exports.decide = function(input) {
     var orderStatus = updateOrderStatus(input);
     var decision = updateDecision(input, parameters, orderStatus);
     return decision;
+}
+
+exports.initialize = function(pair) {
+    ia.localHistory = [];
+    ia.lastDeleted = 0;
+    ia.localMin = Infinity;
+    ia.pendingBuy = 0;
+    ia.krakenMin = eval('config.krakenMin' + pair.substring(0, 3));
+    ia.spread = eval('config.spread' + pair.substring(0, 3));
 }
