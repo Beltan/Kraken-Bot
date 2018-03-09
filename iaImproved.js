@@ -43,7 +43,7 @@ function updateBuys(bid, openTrades) {
 
 /*
 The vectors of openTrades, openBuyOrders and openSellOrders will be replaced with a vector called openOrders
-This vector will track all the open orders (so it can contain 0-1 buy orders and 0-10 sell orders).
+This vector will track all the open orders (so it can contain 0-1 buy orders and 0-10 sell orders). It could contain 2 buy orders in some cases, but atleast 1 would be already canceled and therefore deleted.
 The info of the vector will be type (buy/sell), status (pending, partial...), id, price, price2 (maybe some other important info that kraken returns)
 This vector will be updated by the ia with the information that the ia decides and with what the api returns from kraken.
 The ia will send to the api the ids of all the orders in the vector and in the next iteration will update the vector with the info received
