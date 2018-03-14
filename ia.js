@@ -58,13 +58,13 @@ function updateDecision(n, p) {
             (p.buyIncrease <= config.highBuy)) {
 
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'buy', 'price' : n.ask, 'quantity' : buyBalance};
+        decision = {'type' : 'placeBuy', 'price' : n.ask, 'quantity' : buyBalance};
 
     } else if ((n.openTrades.length > 0) && (p.sellIncreaseWin >= config.sellPositive)) {
 
         var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.lowestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
-        decision = {'type' : 'sell', 'price' : p.lowestBuy * (1 + config.sellPositive / 100), 
+        decision = {'type' : 'placeSell', 'price' : p.lowestBuy * (1 + config.sellPositive / 100), 
             'quantity' : sellBalance, 'index' : deleteIndex};
 
     } else if ((n.openTrades.length > 0) && (p.sellIncreaseLose <= config.sellNegative)) {
@@ -72,7 +72,7 @@ function updateDecision(n, p) {
         var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.highestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
         var bid = n.bid;
-        decision = {'type' : 'sell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
+        decision = {'type' : 'placeSell', 'price' : bid, 'quantity' : sellBalance, 'index' : deleteIndex};
 
     }
     return decision;

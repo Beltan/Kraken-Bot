@@ -112,6 +112,7 @@ var getBasicFilterFunction = function(column, value, negate = false) {
     return filterFunction;
 }
 
+// NOT WORKING !!!!!!
 exports.getHistoricGraph = function(column, filterColumn = null, filterValue = null, scale = null) {
     var name = "Historic " + column;
 
@@ -130,5 +131,5 @@ exports.getHistoricGraph = function(column, filterColumn = null, filterValue = n
         name += " (scaled)"
     }
   
-    return this.getGraph(name, api.getApiState().tradeHistory, column, options, filterFunctions);
+    return this.getGraph(name, api.getTradeHistoric(), column, options, filterFunctions);
 }

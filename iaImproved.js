@@ -93,24 +93,24 @@ function updateDecision(n, p, orderStatus) {
     // buy balance is repetead lot's of times..
     if (orderStatus == 'standby') {
     }else if (!buyConditions && (orderStatus == 'buy order placed' || orderStatus == 'buy order pending' || orderStatus == 'buy order partial fill')) {
-        decision = {'type' : "cancel buy order"};
+        decision = {'type' : "cancelBuy"};
     }else if ((orderStatus == 'no orders placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'placeBuy', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
     }else if ((orderStatus == 'buy order placed') && buyConditions) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'update buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'updateBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
     }else if (orderStatus == 'buy order filled') {
         var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.lowestBuy);
         var sellBalance = n.openTrades[deleteIndex]['quantity'];
-        decision = {'type' : 'place sell order', 'price' : p.lowestBuy * (1 + config.sellPositive / 100),
+        decision = {'type' : 'placeSell', 'price' : p.lowestBuy * (1 + config.sellPositive / 100),
             'price2' : p.lowestBuy * (1 + config.sellNegative / 100), 'quantity' : sellBalance};
-    }else if ((orderStatus == 'sell order placed') && buyConditions && (n.openTrades.length < config.maxBuy)) {
+    }else if ((orderStatus == 'sell order') && buyConditions && (n.openTrades.length < config.maxBuy)) {
         var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'placeBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
     }else if ((orderStatus == 'buy order partial fill') && buyConditions && ia.pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
         var buyBalance = ia.pendingBuy;
-        decision = {'type' : 'update buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
+        decision = {'type' : 'updateBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
     }
     return decision;
 }
