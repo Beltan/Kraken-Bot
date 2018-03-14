@@ -38,10 +38,10 @@ function filterOrders(openOrders) {
     return {openOrders, closedOrders};
 }
 
-function getParameters(orders) {
+function getParameters(openOrders) {
     var openBuys = {'counter' : 0, 'keys' : []};
-    for (var key in orders.openOrders) {
-        if (orders.openOrders[key]['descr']['type'] == buy) {
+    for (var key in openOrders) {
+        if (openOrders[key]['descr']['type'] == buy) {
             openBuys.keys[openBuys.counter] = key;
             openBuys.counter++;
         }
@@ -49,7 +49,7 @@ function getParameters(orders) {
     return openBuys;
 }
 
-function UpdateTradeHistory(closedOrders) {
+function updateTradeHistory(closedOrders) {
     for (var key in closedOrders) {
         if (closedOrders[key]['status'] == 'closed' || closedOrders[key]['vol_exec'] != 0) {
             if ((closedOrders[key]['status'] == 'cancelled') || (closedOrders[key]['status'] == 'closed' && closedOrders[key]['descr']['type'] == buy)) {
@@ -123,7 +123,7 @@ exports.decide = function(input) {
     updateHistory(input.value);
     updateLocalMinimum(input.value);
     var orders = filterOrders(input.openOrders);
-    var openBuys = getParameters(orders);
+    var openBuys = getParameters(orders.openOrders);
     updateTradeHistory(orders.closedOrders);
     var decision = updateDecision(input, openBuys, orders);
     return decision;
