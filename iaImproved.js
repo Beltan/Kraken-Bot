@@ -27,110 +27,117 @@ function updateLocalMinimum(value) {
     }
 }
 
-function updateBuys(bid, openTrades) {
-
-    var lowestBuy = Infinity;
-
-    for (i = 0; i < openTrades.length; i++) {
-        if (openTrades[i]['buyPrice'] <= lowestBuy) {
-            lowestBuy = openTrades[i]['buyPrice'];
+function filterOrders(openOrders) {
+    var closedOrders = {};
+    for (var key in openOrders) {
+        if (openOrders[key]['status'] == 'closed' || openOrders[key]['status'] == 'canceled') {
+            Object.assign(closedOrders, openOrders[key]);
+            delete openOrders[key];
         }
     }
-    var buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
-    var parameters = {lowestBuy, buyIncrease};
-    return parameters;
+    return {openOrders, closedOrders};
 }
 
-/*
-The vectors of openTrades, openBuyOrders and openSellOrders will be replaced with a vector called openOrders
-This vector will track all the open orders (so it can contain 0-1 buy orders and 0-10 sell orders). It could contain 2 buy orders in some cases, but atleast 1 would be already canceled and therefore deleted.
-The info of the vector will be type (buy/sell), status (pending, partial...), id, price, price2 (maybe some other important info that kraken returns)
-This vector will be updated by the ia with the information that the ia decides and with what the api returns from kraken.
-The ia will send to the api the ids of all the orders in the vector and in the next iteration will update the vector with the info received
-After the update it will search for canceled and filled orders and it will delete them from the vector
-The ia does not need further info besides the parameters that it already has like bid, ask, value and balance
-*/
-
-// openBuyOrders tracks all the buy orders that are placed until they are canceled or their respective sell order is completely filled
-// openSellOrders tracks all the sell orders that are placed until they are filled
-// both vectors should contain additional parameters, mainly the openBuyOrders
-
-function updateOrderStatus(n) {
-    ia.pendingBuy = n.openBuyOrders[n.openBuyOrders.length - 1]['missing volume'];
-    var executedVolume = n.openBuyOrders[n.openBuyOrders.length - 1]['executed volume'];
-    var orderStatus = 'standby';
-    if (n.openTrades.length == 0 && n.openBuyOrders.length == 0 && n.openSellOrders.length == 0) {
-        orderStatus = 'no orders placed';
-    }else if (n.openTrades.length == 0 && n.openBuyOrders.length > 0) {
-        orderStatus = 'buy order placed';
-    }else if (n.openTrades.length > 0 && (n.openTrades.length == n.openBuyOrders.length)) {
-        orderStatus = 'buy order filled';
-    }else if (n.openTrades.length > 0 && (n.openTrades.length == n.openSellOrders.length)) {
-        orderStatus = 'sell order placed';
-    }else if (n.openBuyOrders.length > 0 && (n.openTrades.length < n.openBuyOrders.length)) {
-        if (ia.pendingBuy != 0 && executedVolume != 0){
-        orderStatus = 'buy order partial fill';
-        }else {
-        orderStatus = 'buy order pending';
+function getParameters(orders) {
+    var openBuys = {'counter' : 0, 'keys' : []};
+    for (var key in orders.openOrders) {
+        if (orders.openOrders[key]['descr']['type'] == buy) {
+            openBuys.keys[openBuys.counter] = key;
+            openBuys.counter++;
         }
     }
-    return orderStatus;
+    return openBuys;
 }
 
-function buyConditions(p) {
+function UpdateTradeHistory(closedOrders) {
+    for (var key in closedOrders) {
+        if (closedOrders[key]['status'] == 'closed' || closedOrders[key]['vol_exec'] != 0) {
+            if ((closedOrders[key]['status'] == 'cancelled') || (closedOrders[key]['status'] == 'closed' && closedOrders[key]['descr']['type'] == buy)) {
+                var history = {'position' : ia.tradeHistory.length, 'userref' : key, 'buyPrice' : closedOrders[key]['price'], 'quantity' : closedOrders[key]['vol_exec'], 'buyCommission' : closedOrders[key]['fee']};
+                for (i = 0; i < ia.openTrades.length; i++) {
+                    if (ia.opentrades[i]['userref'] == key) {
+                        average = ia.volume * ia.average + closedOrders[key]['vol_exec'] * closedOrders[key]['price'];
+                        volume = ia.volume + closedOrders[key]['vol_exec'];
+                        fee = ia.fee + closedOrders[key]['fee'];
+                        history = {'position' : ia.tradeHistory.length - 1, 'userref' : key, 'buyPrice' : average, 'quantity' : volume, 'buyCommission' : fee};
+                    }
+                }
+                var index = ia.openTrades.findIndex(i => i.userref == key)
+                var position = ia.openTrades[index][position];
+                ia.openTrades.slice(index, 1);
+                ia.openTrades.push(history);
+                ia.tradeHistory.slice(position, 1);
+                ia.tradeHistory.push(history);
+            }if (closedOrders[key]['descr']['type'] == sell) {
+                var history = {'sellPrice' : closedOrders[key]['price'], 'sellCommission' : closedOrders[key]['fee']};
+                var index = ia.openTrades.findIndex(i => i.userref == key)
+                Object.assign(ia.tradeHistory[index], history);
+            }
+        }
+    }
+}
+
+function buyConditions(bid) {
     var buyConditions = false;
+    var buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
     if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
         buyConditions = true;
     }
     return buyConditions;
 }
 
-//n -> input, p -> parameters
-function updateDecision(n, p, orderStatus) {
+//n -> input
+function updateDecision(n, openBuys, orders) {
     var decision = {'type' : 'standby'};
-    var buyConditions = buyConditions (p);
+    var buyConditions = buyConditions (n.bid);
+    var length = Object.keys(openOrders).length;
 
-    // buy balance is repetead lot's of times..
-    if (orderStatus == 'standby') {
-    }else if (!buyConditions && (orderStatus == 'buy order placed' || orderStatus == 'buy order pending' || orderStatus == 'buy order partial fill')) {
-        decision = {'type' : "cancelBuy"};
-    }else if ((orderStatus == 'no orders placed') && buyConditions) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'placeBuy', 'price' : n.bid + config.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order placed') && buyConditions) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'updateBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
-    }else if (orderStatus == 'buy order filled') {
-        var deleteIndex = n.openTrades.findIndex(i => i.buyPrice == p.lowestBuy);
-        var sellBalance = n.openTrades[deleteIndex]['quantity'];
-        decision = {'type' : 'placeSell', 'price' : p.lowestBuy * (1 + config.sellPositive / 100),
-            'price2' : p.lowestBuy * (1 + config.sellNegative / 100), 'quantity' : sellBalance};
-    }else if ((orderStatus == 'sell order') && buyConditions && (n.openTrades.length < config.maxBuy)) {
-        var buyBalance = n.balance / (config.maxBuy - n.openTrades.length);
-        decision = {'type' : 'placeBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
-    }else if ((orderStatus == 'buy order partial fill') && buyConditions && ia.pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
-        var buyBalance = ia.pendingBuy;
-        decision = {'type' : 'updateBuy', 'price' : n.bid + ia.spread, 'quantity' : buyBalance};
+    if (!buyConditions && openBuys.counter == 1) {
+        decision = {'type' : "cancel buy order", 'userref' : openBuys.keys[0]};
+    }else if (buyConditions && (length == 0 || (openBuys.counter == 0 && length < config.maxBuy))) {
+        var buyBalance = n.balance / (config.maxBuy - length);
+        ia.volume = 0;
+        ia.average = 0;
+        ia.fee = 0;
+        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) + (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) + (1 + config.sellNegative / 100)}};
+    }else if (buyConditions && openBuys.counter == 1 && n.bid > orders.openOrders[openBuys.keys[0]]['descr']['price']) {
+        if (orders.openOrders[openBuys.keys[0]]['vol_exec'] == 0) {
+            var buyBalance = n.balance / (config.maxBuy - length);
+            decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) + (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) + (1 + config.sellNegative / 100)}};
+        }else {
+            var pendingBuy = orders.openOrders[openBuys.keys[0]]['vol'] - orders.openOrders[openBuys.keys[0]]['vol_exec'];
+            if (buyConditions && pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
+                ia.average = (ia.average * ia.volume + orders.openOrders[openBuys.keys[0]]['price'] * orders.openOrders[openBuys.keys[0]]['vol']) / (ia.volume + orders.openOrders[openBuys.keys[0]]['vol']);
+                ia.volume = ia.volume + orders.openOrders[openBuys.keys[0]]['vol'];
+                ia.fee = ia.fee + orders.openOrders[openBuys.keys[0]]['fee']
+                decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : pendingBuy, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : ia.average + (1 + config.sellPositive / 100), 'price2' : ia.average + (1 + config.sellNegative / 100)}};
+            }
+        }
     }
     return decision;
 }
 
-// input -> {bid, ask, value, openTrades, balance, openBuyOrders, openSellOrders}
-// output -> {type, price, price2, quantity, index};
+// input -> {bid, ask, value, balance, openOrders}
+// output -> {type, price, quantity, close};
 exports.decide = function(input) {
     updateHistory(input.value);
     updateLocalMinimum(input.value);
-    var parameters = updateBuys(input.bid, input.openTrades);
-    var orderStatus = updateOrderStatus(input);
-    var decision = updateDecision(input, parameters, orderStatus);
+    var orders = filterOrders(input.openOrders);
+    var openBuys = getParameters(orders);
+    updateTradeHistory(orders.closedOrders);
+    var decision = updateDecision(input, openBuys, orders);
     return decision;
 }
 
 exports.initialize = function(pair) {
+    ia.volume = 0;
+    ia.average = 0;
+    ia.fee = 0;
+    ia.openTrades = [];
+    ia.tradeHistory = [];
     ia.localHistory = [];
     ia.lastDeleted = 0;
     ia.localMin = Infinity;
-    ia.pendingBuy = 0;
     ia.krakenMin = eval('config.krakenMin' + pair.substring(0, 3));
     ia.spread = eval('config.spread' + pair.substring(0, 3));
 }
