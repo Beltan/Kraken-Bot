@@ -23,7 +23,7 @@ var getOtherType = function(type) {
 }
 
 // Order functions
-var placeOrder = function(type, quantity,  price1, price2 = null, extId = null,
+var placeOrder = function(type, quantity,  price1, price2 = null, userref = null,
         closePrice1 = null, closePrice2 = null) {
     
     api.txid++;
@@ -34,7 +34,7 @@ var placeOrder = function(type, quantity,  price1, price2 = null, extId = null,
     }
     
     var order = {txid : api.txid, price : price1, price2: price2, volume : quantity, 
-        extId : extId, type : type, closeOrder : closeOrder};
+        userref : userref, type : type, closeOrder : closeOrder};
     
     //init values order
     order.vol_exec = 0;
@@ -54,12 +54,12 @@ var getNextTxidOrder = function(type) {
     for(i in api.openOrders) {
         var order = api.openOrders[i];
         if(type == constants.placeSell && order.state == constants.pending) {
-            if(txid == -1 || order.price < value) {
+            if(txid == -1 || order.price < value || order.price2 < value) {
                 txid = i;
             }
         }
         else if(type == constants.placeBuy && order.state == constants.pending) {
-            if(txid == -1 || order.price > value) {
+            if(txid == -1 || order.price > value || order.price2 > value) {
                 txid = i;
             }
         }
@@ -93,7 +93,7 @@ var processOrder = function(txid, updatedValue) {
         // create the new order if present
         if(order.closeOrder != null) {
             placeOrder(getOtherType(order.type), order.volume,
-                order.closeOrder.price1, order.closeOrder.price2, order.extId);
+                order.closeOrder.price1, order.closeOrder.price2, order.userref);
         }
     }
 
@@ -154,7 +154,7 @@ var sell = function(order) {
 
 // Decision functions: For each decision we declare a function
 var placeDecisionOrder = function(decision) {
-    return placeOrder(decision.type, decision.quantity, decision.price, decision.price2, decision.extId);
+    return placeOrder(decision.type, decision.quantity, decision.price, decision.price2, decision.userref);
 }
 
 var cancelOrder = function(decision) {
@@ -171,12 +171,19 @@ exports.executeFunctions = executeFunctions;
 
 exports.getValues = function() {
     var value;
+
     if (api.index < api.historic.length){
         value = api.historic[api.index];
-        api.index++;        
+    } 
+    else {
+        console.log("No more values for simulation");
+        return;
     }
 
+    var oldValue = value;
     value = update(value);
+
+    if(value == oldValue) api.index++; //only advance if it's the same value    
 
     var bid = value * 0.9995;
     var ask = value * 1.0005;
