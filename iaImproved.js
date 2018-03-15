@@ -81,7 +81,7 @@ function updateTradeHistory(closedOrders) {
 function buyConditions(bid) {
     var buyConditions = false;
     var buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
-    if ((p.buyIncrease >= config.lowBuy) && (p.buyIncrease <= config.highBuy)) {
+    if ((buyIncrease >= config.lowBuy) && (buyIncrease <= config.highBuy)) {
         buyConditions = true;
     }
     return buyConditions;
@@ -100,18 +100,19 @@ function updateDecision(n, openBuys, orders) {
         ia.volume = 0;
         ia.average = 0;
         ia.fee = 0;
-        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) + (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) + (1 + config.sellNegative / 100)}};
+        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) * (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) * (1 + config.sellNegative / 100)}};
     }else if (buyConditions && openBuys.counter == 1 && n.bid > orders.openOrders[openBuys.keys[0]]['descr']['price']) {
         if (orders.openOrders[openBuys.keys[0]]['vol_exec'] == 0) {
+            // ERROR PENDING CORRECTION
             var buyBalance = n.balance / (config.maxBuy - length);
-            decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) + (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) + (1 + config.sellNegative / 100)}};
+            decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) * (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) * (1 + config.sellNegative / 100)}};
         }else {
             var pendingBuy = orders.openOrders[openBuys.keys[0]]['vol'] - orders.openOrders[openBuys.keys[0]]['vol_exec'];
             if (buyConditions && pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
                 ia.average = (ia.average * ia.volume + orders.openOrders[openBuys.keys[0]]['price'] * orders.openOrders[openBuys.keys[0]]['vol']) / (ia.volume + orders.openOrders[openBuys.keys[0]]['vol']);
                 ia.volume = ia.volume + orders.openOrders[openBuys.keys[0]]['vol'];
                 ia.fee = ia.fee + orders.openOrders[openBuys.keys[0]]['fee']
-                decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : pendingBuy, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : ia.average + (1 + config.sellPositive / 100), 'price2' : ia.average + (1 + config.sellNegative / 100)}};
+                decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : pendingBuy, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : ia.average * (1 + config.sellPositive / 100), 'price2' : ia.average * (1 + config.sellNegative / 100)}};
             }
         }
     }
