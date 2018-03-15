@@ -41,7 +41,7 @@ function filterOrders(openOrders) {
 function getParameters(openOrders) {
     var openBuys = {'counter' : 0, 'keys' : []};
     for (var key in openOrders) {
-        if (openOrders[key]['descr']['type'] == buy) {
+        if (openOrders[key]['descr']['type'] == 'buy') {
             openBuys.keys[openBuys.counter] = key;
             openBuys.counter++;
         }
@@ -62,15 +62,16 @@ function updateTradeHistory(closedOrders) {
                         history = {'position' : ia.tradeHistory.length - 1, 'userref' : key, 'buyPrice' : average, 'quantity' : volume, 'buyCommission' : fee};
                     }
                 }
-                var index = ia.openTrades.findIndex(i => i.userref == key)
+                var index = ia.openTrades.findIndex(i => i.userref == key);
                 var position = ia.openTrades[index][position];
                 ia.openTrades.slice(index, 1);
                 ia.openTrades.push(history);
                 ia.tradeHistory.slice(position, 1);
                 ia.tradeHistory.push(history);
-            }if (closedOrders[key]['descr']['type'] == sell) {
+            }if (closedOrders[key]['descr']['type'] == 'sell') {
                 var history = {'sellPrice' : closedOrders[key]['price'], 'sellCommission' : closedOrders[key]['fee']};
-                var index = ia.openTrades.findIndex(i => i.userref == key)
+                var index = ia.openTrades.findIndex(i => i.userref == key);
+                var position = ia.openTrades[index][position];
                 Object.assign(ia.tradeHistory[index], history);
             }
         }
