@@ -46,6 +46,7 @@ var placeOrder = function(type, quantity,  price1, price2 = null, userref = null
     return order;
 }
 
+// this function should decide what is the next order to execute
 var getNextTxidOrder = function(type) {
 
     var txid = -1;
@@ -182,8 +183,6 @@ exports.getValues = function() {
 
     var oldValue = value;
     value = update(value);
-
-    if(value == oldValue) api.index++; //only advance if it's the same value    
 
     var bid = value * 0.9995;
     var ask = value * 1.0005;
