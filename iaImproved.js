@@ -1,5 +1,6 @@
 config = require('./config').ia;
 const fs = require('fs');
+var constants = require('./constants');
 
 var ia = {};
 
@@ -30,7 +31,7 @@ function updateLocalMinimum(value) {
 function filterOrders(openOrders) {
     var closedOrders = {};
     for (var key in openOrders) {
-        if (openOrders[key]['status'] == 'closed' || openOrders[key]['status'] == 'canceled') {
+        if (openOrders[key]['status'] == constants.closed || openOrders[key]['status'] == constants.canceled) {
             Object.assign(closedOrders, openOrders[key]);
             delete openOrders[key];
         }
@@ -49,30 +50,56 @@ function getParameters(openOrders) {
     return openBuys;
 }
 
+function initOrder() {
+    ia.volume = 0;
+    ia.average = 0;
+    ia.fee = 0;
+}
+
+function updatePending(openBuys, openOrders) {
+    ia.average = (ia.average * ia.volume + openOrders[openBuys.keys[0]]['price'] * openOrders[openBuys.keys[0]]['vol']) / (ia.volume + openOrders[openBuys.keys[0]]['vol']);
+    ia.volume = ia.volume + openOrders[openBuys.keys[0]]['vol'];
+    ia.fee = ia.fee + openOrders[openBuys.keys[0]]['fee'];
+}
+
+function updateClosed(closedOrders) {
+    var average = ia.volume * ia.average + closedOrders[key]['vol_exec'] * closedOrders[key]['price'];
+    var volume = ia.volume + closedOrders[key]['vol_exec'];
+    var fee = ia.fee + closedOrders[key]['fee'];
+    data = {'average' : average, 'volume' : volume, 'fee' : fee};
+    return data;
+}
+
+function getPosition() {
+    var index = ia.openTrades.findIndex(i => i.userref == key);
+    var position = ia.openTrades[index]['position'];
+    ia.openTrades.slice(index, 1);
+    return position;
+}
+
+function updateVectors(position, history) {
+    ia.openTrades.push(history);
+    ia.tradeHistory.slice(position, 1);
+    ia.tradeHistory.push(history);
+}
+
 function updateTradeHistory(closedOrders) {
     for (var key in closedOrders) {
-        if (closedOrders[key]['status'] == 'closed' || closedOrders[key]['vol_exec'] != 0) {
-            if ((closedOrders[key]['status'] == 'cancelled') || (closedOrders[key]['status'] == 'closed' && closedOrders[key]['descr']['type'] == buy)) {
+        if (closedOrders[key]['status'] == constants.closed || closedOrders[key]['vol_exec'] != 0) {
+            if ((closedOrders[key]['status'] == constants.cancelled) || (closedOrders[key]['status'] == constants.closed && closedOrders[key]['descr']['type'] == 'buy')) {
                 var history = {'position' : ia.tradeHistory.length, 'userref' : key, 'buyPrice' : closedOrders[key]['price'], 'quantity' : closedOrders[key]['vol_exec'], 'buyCommission' : closedOrders[key]['fee']};
                 for (i = 0; i < ia.openTrades.length; i++) {
                     if (ia.opentrades[i]['userref'] == key) {
-                        average = ia.volume * ia.average + closedOrders[key]['vol_exec'] * closedOrders[key]['price'];
-                        volume = ia.volume + closedOrders[key]['vol_exec'];
-                        fee = ia.fee + closedOrders[key]['fee'];
-                        history = {'position' : ia.tradeHistory.length - 1, 'userref' : key, 'buyPrice' : average, 'quantity' : volume, 'buyCommission' : fee};
+                        var data = updateClosed(closedOrders);
+                        history = {'position' : ia.tradeHistory.length - 1, 'userref' : key, 'buyPrice' : data.average, 'quantity' : data.volume, 'buyCommission' : data.fee};
                     }
                 }
-                var index = ia.openTrades.findIndex(i => i.userref == key);
-                var position = ia.openTrades[index][position];
-                ia.openTrades.slice(index, 1);
-                ia.openTrades.push(history);
-                ia.tradeHistory.slice(position, 1);
-                ia.tradeHistory.push(history);
+                var position = getPosition();
+                updateVectors(position, history);
             }if (closedOrders[key]['descr']['type'] == 'sell') {
                 var history = {'sellPrice' : closedOrders[key]['price'], 'sellCommission' : closedOrders[key]['fee']};
-                var index = ia.openTrades.findIndex(i => i.userref == key);
-                var position = ia.openTrades[index][position];
-                Object.assign(ia.tradeHistory[index], history);
+                var position = getPosition();
+                Object.assign(ia.tradeHistory[position], history);
             }
         }
     }
@@ -88,33 +115,22 @@ function buyConditions(bid) {
 }
 
 //n -> input
-function updateDecision(n, openBuys, orders) {
+function updateDecision(bid, balance, openBuys, openOrders) {
     var decision = {'type' : 'standby'};
-    var buyConditions = buyConditions (n.bid);
+    var buyConditions = buyConditions (bid);
     var length = Object.keys(openOrders).length;
+    var buyPrice = bid + ia.spread;
 
     if (!buyConditions && openBuys.counter == 1) {
-        decision = {'type' : "cancel buy order", 'userref' : openBuys.keys[0]};
+        decision = {'type' : constants.cancel, 'userref' : openBuys.keys[0]};
     }else if (buyConditions && (length == 0 || (openBuys.counter == 0 && length < config.maxBuy))) {
-        var buyBalance = n.balance / (config.maxBuy - length);
-        ia.volume = 0;
-        ia.average = 0;
-        ia.fee = 0;
-        decision = {'type' : 'place buy order', 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) * (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) * (1 + config.sellNegative / 100)}};
-    }else if (buyConditions && openBuys.counter == 1 && n.bid > orders.openOrders[openBuys.keys[0]]['descr']['price']) {
-        if (orders.openOrders[openBuys.keys[0]]['vol_exec'] == 0) {
-            // ERROR PENDING CORRECTION
-            var buyBalance = n.balance / (config.maxBuy - length);
-            decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : (n.bid + ia.spread) * (1 + config.sellPositive / 100), 'price2' : (n.bid + ia.spread) * (1 + config.sellNegative / 100)}};
-        }else {
-            var pendingBuy = orders.openOrders[openBuys.keys[0]]['vol'] - orders.openOrders[openBuys.keys[0]]['vol_exec'];
-            if (buyConditions && pendingBuy > (ia.krakenMin * (n.bid + ia.spread))) {
-                ia.average = (ia.average * ia.volume + orders.openOrders[openBuys.keys[0]]['price'] * orders.openOrders[openBuys.keys[0]]['vol']) / (ia.volume + orders.openOrders[openBuys.keys[0]]['vol']);
-                ia.volume = ia.volume + orders.openOrders[openBuys.keys[0]]['vol'];
-                ia.fee = ia.fee + orders.openOrders[openBuys.keys[0]]['fee']
-                decision = {'type' : 'update buy order', 'userref' : openBuys.keys[0], 'price' : n.bid + ia.spread, 'quantity' : pendingBuy, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : ia.average * (1 + config.sellPositive / 100), 'price2' : ia.average * (1 + config.sellNegative / 100)}};
-            }
-        }
+        var buyBalance = balance / (config.maxBuy - length);
+        initOrder();
+        decision = {'type' : constants.placeBuy, 'price' : buyPrice, 'quantity' : buyBalance, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : buyPrice * (1 + config.sellPositive / 100), 'price2' : buyPrice * (1 + config.sellNegative / 100)}};
+    }else if (buyConditions && openBuys.counter == 1 && bid > openOrders[openBuys.keys[0]]['descr']['price'] && pendingBuy > (ia.krakenMin * buyPrice)) {
+        var pendingBuy = openOrders[openBuys.keys[0]]['vol'] - openOrders[openBuys.keys[0]]['vol_exec'];
+        updatePending(openBuys, openOrders);
+        decision = {'type' : constants.updateBuy, 'userref' : openBuys.keys[0], 'price' : buyPrice, 'quantity' : pendingBuy, 'close' : {'ordertype' : 'stop-loss-profit', 'price' : buyPrice * (1 + config.sellPositive / 100), 'price2' : buyPrice * (1 + config.sellNegative / 100)}};
     }
     return decision;
 }
@@ -127,14 +143,12 @@ exports.decide = function(input) {
     var orders = filterOrders(input.openOrders);
     var openBuys = getParameters(orders.openOrders);
     updateTradeHistory(orders.closedOrders);
-    var decision = updateDecision(input, openBuys, orders);
+    var decision = updateDecision(input.bid, input.balance, openBuys, orders.openOrders);
     return decision;
 }
 
 exports.initialize = function(pair) {
-    ia.volume = 0;
-    ia.average = 0;
-    ia.fee = 0;
+    initOrder();
     ia.openTrades = [];
     ia.tradeHistory = [];
     ia.localHistory = [];
