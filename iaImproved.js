@@ -82,8 +82,11 @@ function updateClosed(closedOrders) {
 
 function getPosition(key) {
     var index = ia.openTrades.findIndex(i => i.userref == key);
-    var position = ia.openTrades[index]['position'];
-    ia.openTrades.slice(index, 1);
+    if (index != -1) {
+        var position = ia.openTrades[index]['position'];
+    }else {
+        var position = -1;
+    }
     return position;
 }
 
@@ -118,15 +121,20 @@ function updateTradeHistory(closedOrders) {
 
 function updateTradeHistory(closedOrders) {
     for(var key in closedOrders) {
-        if (closedOrders[key]['descr']['type'] == 'sell') {
-            var history = {'sellPrice' : closedOrders[key]['price'], 'sellCommission' : closedOrders[key]['fee']};
+        if (closedOrders[key]['descr']['type'] == 'buy') {
             var position = getPosition(key);
-            Object.assign(ia.tradeHistory[position], history);
-        }else {
-            
+            if (position !=1) {
+                ia.tradeHistory[position]['buyPrice'] =
+                ia.tradeHistory[position]['quantity'] =
+                ia.tradeHistory[position]['buyComission'] =
+            }else {
+                var history = 
+                ia.tradeHistory.push(history);
+            }
         }
     }
 }
+
 
 function buyConditions(bid) {
     var buyConditions = false;
