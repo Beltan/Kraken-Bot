@@ -4,7 +4,9 @@ ia = require('./ia');
 var data = [];
 
 exports.main = function() {
-    api.initialize(pair = 'XRPUSD');
+    var pair = 'XRPUSD';
+    api.initialize(pair);
+    ia.initialize(pair);
     while (api.continue()){
         var values = api.getValues();
         var decision = ia.decide(values);
