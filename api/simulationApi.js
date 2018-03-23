@@ -68,11 +68,10 @@ var buy = function(order, value) {
 
     // get the real quantity
     var quantity = order.volume;
-
-    var commission = quantity * 0.0015;
-    var realQuantity = quantity - commission;
-
     var price = order.price;
+
+    var commission = quantity * price * 0.0015;
+    var realQuantity = quantity - commission;
 
     // update balances
     api.balance[api.second] = api.balance[api.second] - commission - realQuantity;
@@ -124,6 +123,7 @@ exports.getValues = function() {
 
     if (api.index < api.historic.length){
         value = api.historic[api.index];
+        api.index++;
     } 
     else {
         console.log("No more values for simulation");
