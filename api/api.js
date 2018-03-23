@@ -5,24 +5,10 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-exports.continue = function() {
-    return true;
-}
-
 // Kraken calls, pending review
 
-function getOpenOrders() {
-    kraken.api('OpenOrders', {}, results);
-}
-
-function cancelOrder() {
-    var txid = '';
+function cancelOrder(txid) {
     kraken.api('CancelOrder', {txid}, results);
-}
-
-function queryOrder() {
-    var txid = '';
-    kraken.api('QueryOrders', {txid}, results);
 }
 
 function placeOrder() {
@@ -38,6 +24,37 @@ function results (error, data) {
     if(error != null){
         console.log(error);
     }else {
-        console.log (data);
+        return data;
     }
+}
+
+exports.getValues = async function (txid) {
+    var count = 1;
+    var pair = api.pair;
+    try {
+        var response = await kraken.api('Depth', {pair, count});
+        var tradeBalances = await kraken.api('Balance', {});
+        var orders = await kraken.api('QueryOrders', {txid});
+        var balance = tradeBalances[api.second];
+        var bid = response['result'][api.fullPair]['bids'][0][0];
+        var ask = response['result'][api.fullPair]['asks'][0][0];
+        var value = (bid + ask) / 2;
+        var values = {bid, ask, value, balance, orders};
+        return values;
+    }
+    catch (e) {
+        api.errorHistory.push(e);
+    }
+}
+
+exports.initialize = function(pair) {
+    api.pair = pair;
+    api.first = pair.substring(0, 3);
+    api.second = pair.substring(3, 6);
+    api.fullPair = 'X' + api.first + 'Z' + api.second;
+    api.errorHistory = [];
+}
+
+exports.continue = function() {
+    return true;
 }
