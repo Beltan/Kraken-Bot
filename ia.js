@@ -165,6 +165,6 @@ exports.initialize = function(pair) {
     ia.pendingPositions = [];
     ia.lastDeleted = 0;
     ia.localMin = Infinity;
-    ia.krakenMin = eval('config.krakenMin' + pair.substring(0, 3));
-    ia.spread = eval('config.spread' + pair.substring(0, 3));
+    ia.krakenMin = config["krakenMin" + pair.substring(0, 3)];
+    ia.spread = config["spread" + pair.substring(0, 3)];
 }
