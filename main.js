@@ -5,12 +5,13 @@ var data = [];
 
 exports.main = function() {
     var pair = 'XRPUSD';
+    var keys = [];
     api.initialize(pair);
     ia.initialize(pair);
     while (api.continue()){
-        var values = api.getValues();
+        var values = api.getValues(keys);
         var decision = ia.decide(values);
-        api.execute(decision);
+        var keys = api.execute(decision);
 
         // Save data to have a track of what is the bot doing
         var stats = {values : values, decision : decision};

@@ -135,9 +135,10 @@ function updateDecision(bid, balance, openBuy, openOrders) {
                 decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'];
                 return decision;
             } else if (ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellNegative / 100) > bid) {
-                decision.type = constants.placeSell;
-                decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
+                decision.type = constants.updateSell;
                 decision.price = 'market';
+                decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
+                decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec'];
                 return decision;
             }
