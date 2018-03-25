@@ -107,8 +107,8 @@ exports.execute = async function (decision) {
         var order = await processOrder(decision);
         if (order != undefined) {
             decision.keys.push(order.result.txid[0]);
-            var keys = decision.keys;
         }
+        var keys = decision.keys;
     }
     return keys;
 }
