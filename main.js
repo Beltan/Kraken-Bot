@@ -3,15 +3,24 @@ ia = require('./ia');
 
 var data = [];
 
-exports.main = function() {
-    var pair = 'XRPUSD';
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+exports.main = async function() {
+    var pair = 'BCHEUR';
     var keys = [];
     api.initialize(pair);
     ia.initialize(pair);
     while (api.continue()){
-        var values = api.getValues(keys);
-        var decision = ia.decide(values);
-        var keys = api.execute(decision);
+        if (!config.simulation) {
+            await sleep(3000);
+        }
+        var values = await api.getValues(keys);
+        if (values != undefined) {
+            var decision = ia.decide(values);
+            var keys = await api.execute(decision);
+        }
 
         // Save data to have a track of what is the bot doing
         var stats = {values : values, decision : decision};
