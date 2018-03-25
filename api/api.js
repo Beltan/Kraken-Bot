@@ -1,6 +1,10 @@
-var constants = require('../constants');
+const constants = require('../constants');
+const config = require('./../config').api;
+const KrakenClient = require('kraken-api');
+const key = config.key; // API Key
+const secret = config.secret; // API Private Key
+const kraken = new KrakenClient(key, secret);
 
-// Kraken calls, pending review
 
 async function processOrder(decision) {
     var pair = api.pair;
@@ -17,7 +21,7 @@ async function processOrder(decision) {
         var ordertype = 'market';
         var price = undefined;
     }
-    if (decision.type == cosntants.placeBuy) {
+    if (decision.type == constants.placeBuy) {
         var type = 'buy';
         try {
             var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
@@ -25,6 +29,7 @@ async function processOrder(decision) {
         }
         catch (e) {
             api.errorHistory.push(e);
+            console.log('Error while placing buy, buy not placed');
         }
     } else if (decision.type == constants.placeSell) {
         var type = 'sell';
@@ -34,6 +39,7 @@ async function processOrder(decision) {
         }
         catch (e) {
             api.errorHistory.push(e);
+            console.log('Error while placing sell, sell not placed');
         }
     } else if (decision.type == constants.updateBuy) {
         var type = 'buy';
@@ -47,6 +53,7 @@ async function processOrder(decision) {
         }
         catch (e) {
             api.errorHistory.push(e);
+            console.log('Error while placing buy, buy not placed');
         }
     } else if (decision.type == constants.updateSell) {
         var type = 'sell';
@@ -60,6 +67,7 @@ async function processOrder(decision) {
         }
         catch (e) {
             api.errorHistory.push(e);
+            console.log('Error while placing sell, sell not placed');
         }
     }
 }
@@ -67,32 +75,38 @@ async function processOrder(decision) {
 exports.getValues = async function (keys) {
     var count = 1;
     var pair = api.pair;
-    var txid = keys.join (', ');
+    var txid = '';
+    if (keys.length != 0) {
+        var txid = keys.join (', ');
+    }
     try {
         var response = await kraken.api('Depth', {pair, count});
         var tradeBalances = await kraken.api('Balance', {});
-        var orders = await kraken.api('QueryOrders', {txid});
-        var balance = Number(tradeBalances[api.second]);
-        var bid = Number(response['result'][api.fullPair]['bids'][0][0]);
-        var ask = Number(response['result'][api.fullPair]['asks'][0][0]);
+        if (txid != '') {
+            var info = await kraken.api('QueryOrders', {txid});
+            var orders = info.result;
+        }
+        var balance = Number(tradeBalances.result['Z' + api.second]);
+        var bid = Number(response['result'][api.pair]['bids'][0][0]);
+        var ask = Number(response['result'][api.pair]['asks'][0][0]);
         var value = (bid + ask) / 2;
+        console.log(value);
         var values = {bid, ask, value, balance, orders};
         return values;
     }
     catch (e) {
         api.errorHistory.push(e);
-        api.getValues(keys);
+        console.log('Error while retrieving info, info not retrieved');
     }
 }
 
 exports.execute = async function (decision) {
     if (decision.type == 'standby') {
         var keys = decision.keys;
-    }
-    else {
-        var order = processOrder(decision);
+    } else {
+        var order = await processOrder(decision);
         if (order != undefined) {
-            decision.keys.push(order.result.txid);
+            decision.keys.push(order.result.txid[0]);
             var keys = decision.keys;
         }
     }

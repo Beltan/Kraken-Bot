@@ -39,3 +39,4 @@ exports.getTradeHistoric = function() {
 
 exports.continue = api.continue;
 exports.getValues = api.getValues;
+exports.execute = api.execute;
