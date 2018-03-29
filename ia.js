@@ -129,6 +129,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
         var buyBalance = balance / (config.maxBuy - keys.length);
         decision.order = 'buy';
         decision.type = constants.placeBuy;
+        decision.ordertype = 'limit';
         decision.price = buyPrice;
         decision.quantity = buyBalance / buyPrice;
     }else if (buyCons && openBuy != '' && bid > openOrders[openBuy]['descr']['price']) {
@@ -144,6 +145,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
         }
         if (pendingBuy > ia.krakenMin) {
             decision.type = constants.updateBuy;
+            decision.ordertype = 'limit';
             decision.order = 'buy';
             decision.txid = openBuy;
             if (position != -1) {
@@ -157,6 +159,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
             if (ia.tradeHistory[ia.pendingPositions[i]]['placed'] == 'no') {
                 decision.type = constants.placeSell;
                 decision.order = 'sell';
+                decision.ordertype = 'limit';
                 decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.price = truncate(ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellPositive / 100));
                 decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'];
@@ -164,7 +167,8 @@ function updateDecision(bid, balance, openBuy, openOrders) {
             } else if (ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellNegative / 100) > bid) {
                 decision.type = constants.updateSell;
                 decision.order = 'sell';
-                decision.price = 'market';
+                decision.price = undefined;
+                decision.ordertype = 'limit';
                 decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec'];
@@ -176,7 +180,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
 }
 
 // input -> {bid, ask, value, balance, orders}
-// output -> {order, type, userref, txid, price, quantity, keys};
+// output -> {order, ordertype, type, userref, txid, price, quantity, keys};
 exports.decide = function(input) {
     updateHistory(input.value);
     updateLocalMinimum(input.value);
