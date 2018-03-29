@@ -9,17 +9,16 @@ function sleep(ms) {
 
 exports.main = async function() {
     var pair = 'BCHEUR';
-    var keys = [];
     api.initialize(pair);
     ia.initialize(pair);
     while (api.continue()){
         if (!config.simulation) {
             await sleep(3000);
         }
-        var values = await api.getValues(keys);
+        var values = await api.getValues();
         if (values != undefined) {
             var decision = ia.decide(values);
-            var keys = await api.execute(decision);
+            await api.execute(decision);
         }
 
         // Save data to have a track of what is the bot doing
