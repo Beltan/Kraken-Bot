@@ -10,6 +10,8 @@ var tradeHistoric;
 
 // ---- PRIVATE FUNCTIONS ----
 
+/*  Needs update
+
 var addToHistory = function(result) {
     if(result.type == constants.placeBuy) {
         tradeHistoric[result.txid] = [result];
@@ -18,18 +20,23 @@ var addToHistory = function(result) {
         tradeHistoric[result.position].push(result);
     }
 }
+*/
 
 // ---- PUBLIC FUNCTIONS -----
 
 exports.execute = function(decision) {
     if(decision.type != "standby") {
         var result = api.executeFunctions[decision.type](decision);
-        addToHistory(result);
-    }   
+        // See previous comment
+        // addToHistory(result);
+    } else {
+        api.keys = decision.keys;
+    }
 }
 
 exports.initialize = function(pair) {
     api.initialize(pair);
+    api.keys = [];
     tradeHistoric = {};
 }
 
@@ -39,4 +46,3 @@ exports.getTradeHistoric = function() {
 
 exports.continue = api.continue;
 exports.getValues = api.getValues;
-exports.execute = api.execute;

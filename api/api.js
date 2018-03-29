@@ -5,79 +5,12 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
-
-async function processOrder(decision) {
-    var pair = api.pair;
-    var volume = decision.quantity;
-    if (decision.userref != undefined) {
-        var userref = decision.userref;
-    } else {
-        var userref = undefined;
-    }
-    if (decision.price != 'market') {
-        var ordertype = 'limit';
-        var price = decision.price;
-    } else {
-        var ordertype = 'market';
-        var price = undefined;
-    }
-    if (decision.type == constants.placeBuy) {
-        var type = 'buy';
-        try {
-            var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
-            return order;
-        }
-        catch (e) {
-            api.errorHistory.push(e);
-            console.log('Error while placing buy, buy not placed');
-        }
-    } else if (decision.type == constants.placeSell) {
-        var type = 'sell';
-        try {
-            var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
-            return order;
-        }
-        catch (e) {
-            api.errorHistory.push(e);
-            console.log('Error while placing sell, sell not placed');
-        }
-    } else if (decision.type == constants.updateBuy) {
-        var type = 'buy';
-        var txid = decision.txid;
-        try {
-            var cancel = await kraken.api('CancelOrder', {txid});
-            if (cancel.result.count == 1) {
-                var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
-                return order;
-            }
-        }
-        catch (e) {
-            api.errorHistory.push(e);
-            console.log('Error while placing buy, buy not placed');
-        }
-    } else if (decision.type == constants.updateSell) {
-        var type = 'sell';
-        var txid = decision.txid;
-        try {
-            var cancel = await kraken.api('CancelOrder', {txid});
-            if (cancel.result.count == 1) {
-                var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
-                return order;
-            }
-        }
-        catch (e) {
-            api.errorHistory.push(e);
-            console.log('Error while placing sell, sell not placed');
-        }
-    }
-}
-
-exports.getValues = async function (keys) {
+exports.getValues = async function () {
     var count = 1;
     var pair = api.pair;
     var txid = '';
-    if (keys.length != 0) {
-        var txid = keys.join (', ');
+    if (api.keys.length != 0) {
+        var txid = api.keys.join (', ');
     }
     try {
         var response = await kraken.api('Depth', {pair, count});
@@ -96,32 +29,65 @@ exports.getValues = async function (keys) {
     }
     catch (e) {
         api.errorHistory.push(e);
-        console.log('Error while retrieving info, info not retrieved');
+        console.log('Error while retrieving info, trying again... -> ' + e);
     }
 }
 
-var execute = async function (decision) {
-    var keys;
-    if (decision.type == 'standby') {
-        keys = decision.keys;
+var cancelOrder = async function(decision) {
+    var txid = decision.txid;
+    try {
+        var order = await kraken.api('CancelOrder', {txid});
+        console.log('Order ' + txid + ' canceled succesfully');
+        return order;
+    } catch (e) {
+        api.errorHistory.push(e);
+        console.log('Error while canceling order, order not canceled. Trying again... -> ' + e);
+    }
+}
+
+var placeOrder = async function(decision) {
+    var pair = api.pair;
+    var type = decision.order;
+    var volume = decision.quantity;
+    var userref = undefined;
+    if (decision.price != 'market') {
+        var ordertype = 'limit';
+        var price = decision.price;
     } else {
-        var order = await processOrder(decision);
-        if (order != undefined) {
-            decision.keys.push(order.result.txid[0]);
-        }
-        keys = decision.keys;
+        var ordertype = 'market';
+        var price = undefined;
     }
-    return keys;
+    if (decision.userref != '') {
+        var userref = decision.userref;
+    }
+    try {
+        var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
+        decision.keys.push(order.result.txid[0]);
+        api.keys = decision.keys;
+        console.log(type + ' order placed succesfully -> ' + type + ' ' + volume + ' ' + pair + ' @ ' + ordertype + ' ' + price);
+        return order;
+    }
+    catch (e) {
+        api.errorHistory.push(e);
+        console.log('Error while placing buy, buy not placed. Trying again... -> ' + e);
+    }
 }
 
-// this is overloading the execute function, if you see processOrder has lots of
-// if ... else.. the idea es to create functions for each type so then we can call them directly
+var updateOrder = function(decision) {
+    var result;
+    result = cancelOrder(decision);
+    if (result != undefined) {
+        var order = placeOrder(decision);
+        return order;
+    }
+}
+
 var executeFunctions = {};
-executeFunctions[constants.placeBuy] = execute;
-executeFunctions[constants.placeSell] = execute;
-executeFunctions[constants.cancelBuy] = execute;
-executeFunctions[constants.cancelSell] = execute;
-executeFunctions[constants.updateOrder] = execute;
+executeFunctions[constants.placeBuy] = placeOrder;
+executeFunctions[constants.placeSell] = placeOrder;
+executeFunctions[constants.cancel] = cancelOrder;
+executeFunctions[constants.updateBuy] = updateOrder;
+executeFunctions[constants.updateSell] = updateOrder;
 exports.executeFunctions = executeFunctions;
 
 exports.initialize = function(pair) {
@@ -130,6 +96,7 @@ exports.initialize = function(pair) {
     api.second = pair.substring(3, 6);
     api.fullPair = 'X' + api.first + 'Z' + api.second;
     api.errorHistory = [];
+    api.keys = [];
 }
 
 exports.continue = function() {
