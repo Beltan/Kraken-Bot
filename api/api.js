@@ -85,19 +85,30 @@ exports.getValues = async function (keys) {
     }
 }
 
-exports.execute = async function (decision) {
+var execute = async function (decision) {
+    var keys;
     if (decision.type == 'standby') {
-        var keys = decision.keys;
+        keys = decision.keys;
     }
     else {
         var order = processOrder(decision);
         if (order != undefined) {
             decision.keys.push(order.result.txid);
-            var keys = decision.keys;
+            keys = decision.keys;
         }
     }
     return keys;
 }
+
+// this is overloading the execute function, if you see processOrder has lots of
+// if ... else.. the idea es to create functions for each type so then we can call them directly
+var executeFunctions = {};
+executeFunctions[constants.placeBuy] = execute;
+executeFunctions[constants.placeSell] = execute;
+executeFunctions[constants.cancelBuy] = execute;
+executeFunctions[constants.cancelSell] = execute;
+executeFunctions[constants.updateOrder] = execute;
+exports.executeFunctions = executeFunctions;
 
 exports.initialize = function(pair) {
     api.pair = pair;
