@@ -48,15 +48,10 @@ var cancelOrder = async function(decision) {
 var placeOrder = async function(decision) {
     var pair = api.pair;
     var type = decision.order;
+    var price = decision.price;
     var volume = decision.quantity;
+    var ordertype = decision.ordertype;
     var userref = undefined;
-    if (decision.price != 'market') {
-        var ordertype = 'limit';
-        var price = decision.price;
-    } else {
-        var ordertype = 'market';
-        var price = undefined;
-    }
     if (decision.userref != '') {
         var userref = decision.userref;
     }
