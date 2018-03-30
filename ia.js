@@ -126,7 +126,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
         decision.type = constants.cancel;
         decision.txid = openBuy;
     }else if (buyCons && openBuy == '' && keys.length < config.maxBuy) {
-        var buyBalance = balance / (config.maxBuy - keys.length);
+        var buyBalance = 0.99 * balance / (config.maxBuy - keys.length);
         decision.order = 'buy';
         decision.type = constants.placeBuy;
         decision.ordertype = 'limit';
@@ -168,7 +168,7 @@ function updateDecision(bid, balance, openBuy, openOrders) {
                 decision.type = constants.updateSell;
                 decision.order = 'sell';
                 decision.price = undefined;
-                decision.ordertype = 'limit';
+                decision.ordertype = 'market';
                 decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['txid'];
                 decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec'];
