@@ -39,7 +39,7 @@ function filterOrders(openOrders) {
     for (var key in openOrders) {
         if (openOrders[key]['status'] == constants.closed || openOrders[key]['status'] == constants.canceled) {
             if (openOrders[key]['vol_exec'] != 0) {
-                Object.assign(closedOrders, openOrders[key]);
+                closedOrders[key] = openOrders[key];
             }
             delete openOrders[key];
         }
@@ -80,7 +80,11 @@ function updateTradeHistory(orders) {
         }
     }
     for(var key in orders.closedOrders) {
-        var position = getPosition(orders.closedOrders[key]['userref']);
+        if (orders.closedOrders[key]['userref'] != '') {
+            var position = getPosition(orders.closedOrders[key]['userref']);
+        } else {
+            var position = -1;
+        }
         if (orders.closedOrders[key]['descr']['type'] == 'buy') {
             if (position != -1) {
                 var average = ia.tradeHistory[position]['buyPrice'] * ia.tradeHistory[position]['buy_exec'] + orders.closedOrders[key]['price'] * orders.closedOrders[key]['vol_exec'] / (ia.tradeHistory[position]['buy_exec'] + orders.closedOrders[key]['vol_exec']);
@@ -90,7 +94,7 @@ function updateTradeHistory(orders) {
             }else {
                 var history = {'txid' : key, 'buyPrice' : orders.closedOrders[key]['price'], 'buy_exec' : orders.closedOrders[key]['vol_exec'], 'volume' : orders.closedOrders[key]['vol'], 'buyCommission' : orders.closedOrders[key]['fee'], 'sellPrice' : 0, 'vol_exec' : 0, 'sellCommission' : 0, 'placed' : 'no'};
                 ia.tradeHistory.push(history);
-                ia.pendingPositions[tradeHistory.length] = tradeHistory.length - 1;
+                ia.pendingPositions[ia.tradeHistory.length - 1] = ia.tradeHistory.length - 1;
             }
         } else {
             var average = ia.tradeHistory[position]['sellPrice'] * ia.tradeHistory[position]['sell_exec'] + orders.closedOrders[key]['price'] * orders.closedOrders[key]['vol_exec'] / (ia.tradeHistory[position]['sell_exec'] + orders.closedOrders[key]['vol_exec']);
@@ -125,8 +129,8 @@ function updateDecision(bid, balance, openBuy, openOrders) {
     if (!buyCons && openBuy != '') {
         decision.type = constants.cancel;
         decision.txid = openBuy;
-    }else if (buyCons && openBuy == '' && keys.length < config.maxBuy) {
-        var buyBalance = 0.99 * balance / (config.maxBuy - keys.length);
+    }else if (buyCons && openBuy == '' && ia.pendingPositions.length < config.maxBuy) {
+        var buyBalance = 0.99 * balance / (config.maxBuy - ia.pendingPositions.length);
         decision.order = 'buy';
         decision.type = constants.placeBuy;
         decision.ordertype = 'limit';
