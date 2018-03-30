@@ -23,7 +23,7 @@ exports.getValues = async function () {
         var bid = Number(response['result'][api.pair]['bids'][0][0]);
         var ask = Number(response['result'][api.pair]['asks'][0][0]);
         var value = (bid + ask) / 2;
-        console.log(value);
+        console.log(bid + ' ' + ask);
         var values = {bid, ask, value, balance, orders};
         return values;
     }
@@ -64,16 +64,19 @@ var placeOrder = async function(decision) {
     }
     catch (e) {
         api.errorHistory.push(e);
-        console.log('Error while placing buy, buy not placed. Trying again... -> ' + e);
+        console.log('Error while placing ' + type + ', ' + type + ' not placed. Trying again... -> ' + e);
     }
 }
 
-var updateOrder = function(decision) {
-    var result;
-    result = cancelOrder(decision);
+var updateOrder = async function(decision) {
+    try {
+        var result = await cancelOrder(decision);
+    } catch (e) {}
     if (result != undefined) {
-        var order = placeOrder(decision);
-        return order;
+        try {
+            var order = await placeOrder(decision);
+            return order;
+        } catch (e) {}
     }
 }
 
