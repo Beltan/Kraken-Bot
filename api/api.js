@@ -51,10 +51,7 @@ var placeOrder = async function(decision) {
     var price = decision.price;
     var volume = decision.quantity;
     var ordertype = decision.ordertype;
-    var userref = undefined;
-    if (decision.userref != '') {
-        var userref = decision.userref;
-    }
+    var userref = decision.userref;
     try {
         var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
         decision.keys.push(order.result.txid[0]);
