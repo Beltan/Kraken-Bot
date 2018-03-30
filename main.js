@@ -13,12 +13,18 @@ exports.main = async function() {
     ia.initialize(pair);
     while (api.continue()){
         if (!config.simulation) {
-            await sleep(3000);
+            try {
+                await sleep(3000);
+            } catch (e) {}
         }
-        var values = await api.getValues();
+        try {
+            var values = await api.getValues();
+        } catch (e) {}
         if (values != undefined) {
             var decision = ia.decide(values);
-            await api.execute(decision);
+            try {
+                await api.execute(decision);
+            } catch (e) {}
         }
 
         // Save data to have a track of what is the bot doing
