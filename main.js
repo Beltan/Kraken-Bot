@@ -8,9 +8,8 @@ function sleep(ms) {
 }
 
 exports.main = async function() {
-    var pair = 'BCHEUR';
-    api.initialize(pair);
-    ia.initialize(pair);
+    api.initialize();
+    ia.initialize();
     while (api.continue()){
         if (!config.simulation) {
             try {

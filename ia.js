@@ -248,7 +248,7 @@ exports.decide = function(input) {
     return decision;
 }
 
-exports.initialize = function(pair) {
+exports.initialize = function() {
     ia.tradeHistory = [];
     ia.localHistory = [];
     ia.pendingPositions = [];
@@ -256,6 +256,8 @@ exports.initialize = function(pair) {
     ia.userref = {};
     ia.lastDeleted = 0;
     ia.localMin = Infinity;
+
+    var pair = config.pair;
     ia.krakenMin = config["krakenMin" + pair.substring(0, 3)];
     ia.spread = config["spread" + pair.substring(0, 3)];
 }

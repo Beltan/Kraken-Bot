@@ -85,7 +85,8 @@ executeFunctions[constants.updateBuy] = updateOrder;
 executeFunctions[constants.updateSell] = updateOrder;
 exports.executeFunctions = executeFunctions;
 
-exports.initialize = function(pair) {
+exports.initialize = function() {
+    var pair = config.pair;
     api.pair = pair;
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);

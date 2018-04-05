@@ -1,11 +1,13 @@
-module.exports.api = {
+var pair = "BCHEUR";
+
+var api = {
     key: '6eIPFTFkyjZtIv5yPH8/msbYt0+7JQID7b2GLqUoLcp35Si/hFixkVYT', // API Key
     secret: 'KL1gTEyaik7UYm4ctzpkwGt0TIQJq4myQSdb5XNekM/Qj6rh5P3f0OyZo9RoZFQSf9dpENk+piDJkbxKrROf7A==', // API Private Key
-    simulation: false,
+    simulation: true,
     saveAllHistory : true
 }
 
-module.exports.ia = {
+var ia = {
     sellPositive: 2,    // Percentage after which a winning trade will be closed.
     sellNegative: -10,  // Percentage after which a losing trade will be closed.
     local: 140,         // Number of last values checked for the local minimum.
@@ -22,3 +24,9 @@ module.exports.ia = {
     krakenMinBCH: 0.002,// Minimum BCH that can be traded
     spreadBCH: 0.1      // Minimum BCH spread
 }
+
+api.pair = pair;
+ia.pair = pair;
+
+module.exports.ia = ia;
+module.exports.api = api;
