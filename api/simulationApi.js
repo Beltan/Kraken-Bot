@@ -13,16 +13,17 @@ var csvToArray = function() {
 }
 
 // Order functions
-var placeOrder = function(type, quantity,  price1, price2 = null, userref = null) {
+var placeOrder = function({type, ordertype, quantity,  price, price2, userref = null}) {
     
     api.txid++;
     
-    var order = {txid : api.txid, price : price1, price2: price2, volume : quantity, 
-        userref : userref, type : type};
+    var descr = {type, ordertype, price,  price2};
+
+    var order = {txid : api.txid, price, vol : quantity, userref, descr};
     
     //init values order
     order.vol_exec = 0;
-    order.state = constants.pending;
+    order.status = constants.open;
     order.createdTime = new Date();
     
     api.openOrders[api.txid] = order;
@@ -33,19 +34,22 @@ var placeOrder = function(type, quantity,  price1, price2 = null, userref = null
 var processOrder = function(txid, updatedValue) {
     var order = api.openOrders[txid];
     var quantity = 0;
+    var price;
 
     // update the balance
     if(order.type == constants.placeBuy && updatedValue <= order.price) {
-        quantity = buy(order, updatedValue);
+        ({price, quantity} = buy(order, updatedValue));
     }
     else if(order.type == constants.placeSell && decisionValue >= 0) {
-        quantity = sell(order, updatedValue);
+        ({price, quantity} = sell(order, updatedValue));
     }
 
     // update the order       
     order.vol_exec += quantity;
+    //this should be the mean
+    order.price = price;
     if(Math.abs(order.vol_exec - order.volume) <= 0.1) {
-        api.openOrders[txid].state = constants.closed;
+        api.openOrders[txid].status = constants.closed;
     }
 
     return  updatedValue;
@@ -68,7 +72,7 @@ var buy = function(order, value) {
 
     // get the real quantity
     var quantity = order.volume;
-    var price = order.price;
+    var price = order.descr.price;
 
     var commission = quantity * price * 0.0015;
     var realQuantity = quantity - commission;
@@ -77,7 +81,7 @@ var buy = function(order, value) {
     api.balance[api.second] = api.balance[api.second] - commission - realQuantity;
     api.balance[api.first] = api.balance[api.first] + realQuantity / price;
 
-    return quantity;
+    return {price, quantity};
 }
 
 var sell = function(order) {
@@ -92,21 +96,21 @@ var sell = function(order) {
     api.balance[api.second] = api.balance[api.second] + quantity * price - commission;
     api.balance[api.first] = api.balance[api.first] - quantity;
 
-    return quantity;
+    return {price, quantity};
 }
 
 // Decision functions: For each decision we declare a function
 var placeDecisionOrder = function(decision) {
-    return placeOrder(decision.type, decision.quantity, decision.price, decision.price2, decision.userref);
+    return placeOrder(decision);
 }
 
 var cancelOrder = function(decision) {
-    api.openOrders[decision.txid].state = constants.canceled;
+    api.openOrders[decision.txid].status = constants.canceled;
 }
 
 var updateOrder = function(decision) {
     cancelOrder(decision);
-    return placeOrder(decision.type, decision.quantity, decision.price, decision.price2, decision.userref);
+    return placeOrder(decision);
 }
 
 // and then we add the functions to the object
@@ -136,7 +140,7 @@ exports.getValues = function() {
     var bid = value * 0.9995;
     var ask = value * 1.0005;
     var balance = api.balance[api.second];
-    var values = {bid, ask, value, balance, "openOrders" : api.openOrders};
+    var values = {bid, ask, value, balance, openOrders : api.openOrders};
     return values;
 }
 
