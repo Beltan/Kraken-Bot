@@ -37,10 +37,10 @@ var processOrder = function(txid, updatedValue) {
     var price;
 
     // update the balance
-    if(order.type == constants.placeBuy && updatedValue <= order.price) {
+    if(order.type == constants.placeBuy && updatedValue <= order.descr.price) {
         ({price, quantity} = buy(order, updatedValue));
     }
-    else if(order.type == constants.placeSell && decisionValue >= 0) {
+    else if(order.type == constants.placeSell && updatedValue >= order.descr.price2) {
         ({price, quantity} = sell(order, updatedValue));
     }
 
@@ -84,11 +84,11 @@ var buy = function(order, value) {
     return {price, quantity};
 }
 
-var sell = function(order) {
+var sell = function(order, value) {
     var quantity = order.volume, randomBuy;
 
     var price;
-    order.price <= value ? price = value : price = order.price2;
+    order.price <= value ? price = value : price = order.descr.price2;
 
     var commission = quantity * price * 0.0015;
 
