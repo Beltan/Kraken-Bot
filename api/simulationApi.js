@@ -13,22 +13,22 @@ var csvToArray = function() {
 }
 
 // Order functions
-var placeOrder = function({type, ordertype, quantity,  price, price2, userref = null}) {
+var placeOrder = function({type, order, ordertype, quantity, price, price2, userref = null}) {
     
     api.txid++;
     
-    var descr = {type, ordertype, price,  price2};
+    var descr = {'type' : order, ordertype, price,  price2};
 
-    var order = {txid : api.txid, price, vol : quantity, userref, descr};
+    var result = {txid : api.txid, price, vol : quantity, userref, descr};
     
     //init values order
-    order.vol_exec = 0;
-    order.status = constants.open;
-    order.createdTime = new Date();
+    result.vol_exec = 0;
+    result.status = constants.open;
+    result.createdTime = new Date();
     
-    api.openOrders[api.txid] = order;
+    api.openOrders[api.txid] = result;
 
-    return order;
+    return result;
 }
 
 var processOrder = function(txid, updatedValue) {
@@ -105,7 +105,12 @@ var placeDecisionOrder = function(decision) {
 }
 
 var cancelOrder = function(decision) {
-    api.openOrders[decision.txid].status = constants.canceled;
+    for (var key in api.openOrders) {
+        if (api.openOrders[key].status == constants.open && api.openOrders[key]['userref'] == decision.txid) {
+            api.openOrders[key].status = constants.canceled;
+            return 1;
+        }
+    }
 }
 
 var updateOrder = function(decision) {
@@ -117,9 +122,9 @@ var updateOrder = function(decision) {
 var executeFunctions = {};
 executeFunctions[constants.placeBuy] = placeDecisionOrder;
 executeFunctions[constants.placeSell] = placeDecisionOrder;
-executeFunctions[constants.cancelBuy] = cancelOrder;
-executeFunctions[constants.cancelSell] = cancelOrder;
-executeFunctions[constants.updateOrder] = updateOrder;
+executeFunctions[constants.cancel] = cancelOrder;
+executeFunctions[constants.updateBuy] = updateOrder;
+executeFunctions[constants.updateSell] = updateOrder;
 exports.executeFunctions = executeFunctions;
 
 exports.getValues = function() {
