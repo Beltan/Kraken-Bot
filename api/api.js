@@ -13,13 +13,15 @@ exports.getValues = async function () {
         var txid = api.keys.join (', ');
     }
     try {
+        var balance = [];
         var response = await kraken.api('Depth', {pair, count});
         var tradeBalances = await kraken.api('Balance', {});
         if (txid != '') {
             var info = await kraken.api('QueryOrders', {txid});
             var orders = info.result;
         }
-        var balance = Number(tradeBalances.result['Z' + api.second]);
+        balance[0] = Number(tradeBalances.result['Z' + api.second]);
+        balance[1] = Number(tradeBalances.result['X' + api.first]);
         var bid = Number(response['result'][api.pair]['bids'][0][0]);
         var ask = Number(response['result'][api.pair]['asks'][0][0]);
         var value = (bid + ask) / 2;

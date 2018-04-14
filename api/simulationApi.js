@@ -3,6 +3,12 @@ var constants = require('../constants');
 
 var api = {};
 
+function roundTo2(number) {
+    multiplier = 100;
+    number = Math.round(number * multiplier) / multiplier;
+    return number;
+}
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
@@ -13,11 +19,11 @@ var csvToArray = function() {
 }
 
 // Order functions
-var placeOrder = function({type, order, ordertype, quantity, price, price2, userref = null}) {
+var placeOrder = function({type, order, ordertype, quantity, price, userref = null}) {
     
     api.txid++;
     
-    var descr = {'type' : order, ordertype, price,  price2};
+    var descr = {'type' : order, ordertype, price};
 
     var result = {txid : api.txid, price, vol : quantity, userref, descr};
     
@@ -35,24 +41,28 @@ var processOrder = function(txid, updatedValue) {
     var order = api.openOrders[txid];
     var quantity = 0;
     var price;
+    var bid = updatedValue * 0.9995;
+    var ask = updatedValue * 1.0005;
 
     // update the balance
-    if(order.type == constants.placeBuy && updatedValue <= order.descr.price) {
-        ({price, quantity} = buy(order, updatedValue));
+    if(order.descr.type == 'buy' && bid < order.descr.price && order.status == constants.open) {
+        ({price, quantity} = buy(order, bid));
     }
-    else if(order.type == constants.placeSell && updatedValue >= order.descr.price2) {
-        ({price, quantity} = sell(order, updatedValue));
+    else if(order.descr.type == 'sell' && order.descr.ordertype != 'market' && bid > order.descr.price && order.status == constants.open) {
+        ({price, quantity} = sell(order, order.descr.price));
     }
-
+    else if(order.descr.type == 'sell' && order.descr.ordertype == 'market' && order.status == constants.open) {
+        ({price, quantity} = sell(order, bid));
+    }
     // update the order       
-    order.vol_exec += quantity;
+    api.openOrders[txid].vol_exec += quantity;
     //this should be the mean
-    order.price = price;
-    if(Math.abs(order.vol_exec - order.volume) <= 0.1) {
+    api.openOrders[txid].price = price;
+    if(Math.abs(api.openOrders[txid].vol_exec - api.openOrders[txid].vol) <= 0.1) {
         api.openOrders[txid].status = constants.closed;
     }
 
-    return  updatedValue;
+    return updatedValue;
 }
 
 var update = function(newValue) {
@@ -68,33 +78,30 @@ var update = function(newValue) {
     return updatedValue;
 }
 
-var buy = function(order, value) {
+var buy = function(order, bid) {
 
     // get the real quantity
-    var quantity = order.volume;
-    var price = order.descr.price;
+    var quantity = order.vol;
+    var price = bid;
 
-    var commission = quantity * price * 0.0015;
-    var realQuantity = quantity - commission;
+    var commission = quantity * price * config.commission;
 
     // update balances
-    api.balance[api.second] = api.balance[api.second] - commission - realQuantity;
-    api.balance[api.first] = api.balance[api.first] + realQuantity / price;
+    api.balance[api.second] = roundTo2(api.balance[api.second] - commission - quantity * price);
+    api.balance[api.first] = roundTo2(api.balance[api.first] + quantity);
 
     return {price, quantity};
 }
 
 var sell = function(order, value) {
-    var quantity = order.volume, randomBuy;
+    var quantity = order.vol;
+    var price = value;
 
-    var price;
-    order.price <= value ? price = value : price = order.descr.price2;
-
-    var commission = quantity * price * 0.0015;
+    var commission = quantity * price * config.commission;
 
     // update balances
-    api.balance[api.second] = api.balance[api.second] + quantity * price - commission;
-    api.balance[api.first] = api.balance[api.first] - quantity;
+    api.balance[api.second] = roundTo2(api.balance[api.second] + quantity * price - commission);
+    api.balance[api.first] = roundTo2(api.balance[api.first] - quantity);
 
     return {price, quantity};
 }
@@ -129,6 +136,7 @@ exports.executeFunctions = executeFunctions;
 
 exports.getValues = function() {
     var value;
+    var balance = [];
 
     if (api.index < api.historic.length){
         value = api.historic[api.index];
@@ -144,7 +152,8 @@ exports.getValues = function() {
 
     var bid = value * 0.9995;
     var ask = value * 1.0005;
-    var balance = api.balance[api.second];
+    balance[0] = api.balance[api.second];
+    balance[1] = api.balance[api.first];
     var values = {bid, ask, value, balance, openOrders : api.openOrders};
     return values;
 }
@@ -154,7 +163,7 @@ exports.initialize = function() {
     api.pair = pair;
     api.first = pair.substring(0, 3);
     api.second = pair.substring(3, 6);
-    api.balance = {[api.second] : 50, [api.first] : 0};
+    api.balance = {[api.second] : 200, [api.first] : 0};
     
     api.index = 0;
     api.txid = 0;
