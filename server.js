@@ -19,9 +19,9 @@ http.listen(3000, function() {
 // IO
 io.on('connection', function(socket){
 	socket.on('disconnect', function() {});
-    /*socket.emit("chartData", graph.getHistoricGraph("balanceFiat"));
-    socket.emit("chartData", graph.getHistoricGraph("balanceFiat", null, null, "logarithmic"));
-    socket.emit("chartData", graph.getHistoricGraph("balanceCrypto"));
+    socket.emit("chartData", graph.getHistoricGraph("balance"));
+    socket.emit("chartData", graph.getHistoricGraph("balance", null, null, "logarithmic"));
+    /*socket.emit("chartData", graph.getHistoricGraph("balanceCrypto"));
     socket.emit("chartData", graph.getHistoricGraph("balanceCrypto", null, null, "logarithmic"));
     socket.emit("chartData", graph.getHistoricGraph("buyPrice"));
     socket.emit("chartData", graph.getHistoricGraph("netPercentage"));*/

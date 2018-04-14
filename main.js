@@ -1,5 +1,6 @@
 api = require('./api/apiWrapper');
 ia = require('./ia');
+var config = require('./config').api;
 
 var data = [];
 

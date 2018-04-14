@@ -59,6 +59,7 @@ function filterOrders(openOrders) {
                     delete ia.userref[closedOrders[key]['userref']];
                 }
             }
+            delete ia.userref[closedOrders[key]['userref']];
             delete closedOrders[key];
         }
     }
@@ -100,7 +101,7 @@ function getPosition(userref) {
     }
 }
 
-function updateTradeHistory(orders) {
+function updateTradeHistory(orders, balance, bid) {
     for (var key in orders.openOrders) {
         if (orders.openOrders[key]['descr']['type'] == 'sell') {
             var position = getPosition(orders.openOrders[key]['userref']);
@@ -116,10 +117,10 @@ function updateTradeHistory(orders) {
                 var average = round(ia.tradeHistory[position]['buyPrice'] * ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec']) / (ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
                 ia.tradeHistory[position]['buyPrice'] = average;
                 ia.tradeHistory[position]['buy_exec'] = round(ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['vol_exec']));
-                ia.tradeHistory[position]['buyComission'] = round(ia.tradeHistory[position]['buy_exec'] * ia.tradeHistory[position]['buyPrice']);
+                ia.tradeHistory[position]['buyComission'] = round(ia.tradeHistory[position]['buy_exec'] * ia.tradeHistory[position]['buyPrice'] * config.commission);
             }else {
-                var buyCommission = round(Number(orders.closedOrders[key]['vol_exec']) * Number(orders.closedOrders[key]['price']));
-                var history = {'txid' : key, 'userref' : orders.closedOrders[key]['userref'], 'buyPrice' : Number(orders.closedOrders[key]['price']), 'buy_exec' : Number(orders.closedOrders[key]['vol_exec']), 'volume' : Number(orders.closedOrders[key]['vol']), 'buyCommission' : buyCommission, 'sellPrice' : 0, 'vol_exec' : 0, 'sell_exec' : 0, 'sellCommission' : 0, 'placed' : 'no'};
+                var buyCommission = round(Number(orders.closedOrders[key]['vol_exec']) * Number(orders.closedOrders[key]['price']) * config.commission);
+                var history = {'txid' : key, 'userref' : orders.closedOrders[key]['userref'], 'buyPrice' : Number(orders.closedOrders[key]['price']), 'buy_exec' : Number(orders.closedOrders[key]['vol_exec']), 'volume' : Number(orders.closedOrders[key]['vol']), 'buyCommission' : buyCommission, 'sellPrice' : 0, 'vol_exec' : 0, 'sell_exec' : 0, 'sellCommission' : 0, 'placed' : 'no', 'balance' : 0, 'profit' : 0};
                 ia.tradeHistory.push(history);
                 ia.pendingPositions.push(ia.tradeHistory.length - 1);
             }
@@ -127,8 +128,10 @@ function updateTradeHistory(orders) {
             var average = round(ia.tradeHistory[position]['sellPrice'] * ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec']) / (ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
             ia.tradeHistory[position]['sellPrice'] = average;
             ia.tradeHistory[position]['sell_exec'] = round(ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['vol_exec']));
-            ia.tradeHistory[position]['sellCommission'] = round(ia.tradeHistory[position]['sell_exec'] * ia.tradeHistory[position]['sellPrice']);
-            if (roundTo8(ia.tradeHistory[position]['buy_exec']) == roundTo8(ia.tradeHistory[position]['sell_exec'])) {
+            ia.tradeHistory[position]['sellCommission'] = round(ia.tradeHistory[position]['sell_exec'] * ia.tradeHistory[position]['sellPrice'] * config.commission);
+            if (Math.abs(roundTo8(ia.tradeHistory[position]['buy_exec']) - roundTo8(ia.tradeHistory[position]['sell_exec'])) < 0.1) {
+                ia.tradeHistory[position]['balance'] = balance[0] + balance [1] * bid;
+                ia.tradeHistory[position]['profit'] = ia.tradeHistory[position]['sell_exec'] * ia.tradeHistory[position]['sellPrice'] - ia.tradeHistory[position]['sellCommission'] - ia.tradeHistory[position]['buyCommission'] - ia.tradeHistory[position]['buy_exec'] * ia.tradeHistory[position]['buyPrice'];
                 delete ia.userref[ia.tradeHistory[position]['userref']];
                 deleteIndex(position);
             }
@@ -173,7 +176,7 @@ function updateDecision(bid, ask, balance, openBuy, openOrders) {
         decision.type = constants.cancel;
         decision.txid = openOrders[openBuy]['userref'];
     }else if (buyCons && openBuy == '' && ia.pendingPositions.length < config.maxBuy) {
-        var buyBalance = 0.99 * balance / (config.maxBuy - ia.pendingPositions.length);
+        var buyBalance = 0.99 * balance[0] / (config.maxBuy - ia.pendingPositions.length);
         decision.order = 'buy';
         decision.type = constants.placeBuy;
         decision.ordertype = 'limit';
@@ -213,7 +216,7 @@ function updateDecision(bid, ask, balance, openBuy, openOrders) {
                 decision.ordertype = 'market';
                 decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
                 decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
-                decision.quantity =  roundTo8(ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec']);
+                decision.quantity = roundTo8(ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec']);
                 return decision;
             }
         }
@@ -229,7 +232,7 @@ exports.decide = function(input) {
     if (ia.localHistory.length == config.local) {
         var orders = filterOrders(input.openOrders);
         var openBuy = getParameters(orders.openOrders);
-        updateTradeHistory(orders);
+        updateTradeHistory(orders, input.balance, input.bid);
         var decision = updateDecision(input.bid, input.ask, input.balance, openBuy, orders.openOrders);
     } else {
         var keys = [];
