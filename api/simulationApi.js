@@ -113,7 +113,7 @@ var placeDecisionOrder = function(decision) {
 
 var cancelOrder = function(decision) {
     for (var key in api.openOrders) {
-        if (api.openOrders[key].status == constants.open && api.openOrders[key]['userref'] == decision.txid) {
+        if (api.openOrders[key].status == constants.open && api.openOrders[key]['userref'] == decision.userref) {
             api.openOrders[key].status = constants.canceled;
             return 1;
         }
