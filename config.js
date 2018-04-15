@@ -9,14 +9,14 @@ var api = {
 }
 
 var ia = {
-    commission: 0.0016,   // Commission percentage
+    commission: 0.0016, // Commission percentage
     sellPositive: 2,    // Percentage after which a winning trade will be closed.
     sellNegative: -10,  // Percentage after which a losing trade will be closed.
     local: 45,          // Number of last values checked for the local minimum.
     lowBuy: 0.01,       // Minimum percentage difference with the local low to open a trade.
     highBuy: 1.5,       // Maximum percentage difference with the local low to open a trade.
     maxBuy: 1,          // Maximum number of simultaneous trades.
-    multipleBuys: 10,   // Percentage decrease that needs to happen before the next buy order can be placed, considering that there is already one trade opened.
+    multipleBuys: 10,    // Percentage decrease that needs to happen before the next buy order can be placed, considering that there is already one trade opened.
     krakenMinXRP: 30,   // Minimum XRP that can be traded
     spreadXRP: 0.00001, // Minimum XRP spread
     krakenMinXBT: 0.002,// Minimum XBT that can be traded

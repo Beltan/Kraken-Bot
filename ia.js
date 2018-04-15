@@ -4,6 +4,16 @@ var constants = require('./constants');
 
 var ia = {};
 
+function lowestBuy() {
+    var lowBuy = Infinity;
+    for (i = 0; i < ia.pendingPositions.length; i++) {
+        if (ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] < lowBuy) {
+            lowBuy = ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'];
+        }
+    }
+    return lowBuy;
+}
+
 function round(number) {
     multiplier = 1 / ia.spread;
     number = Math.round(number * multiplier) / multiplier;
@@ -49,16 +59,8 @@ function filterOrders(openOrders) {
             delete closedOrders[key];
         }
     }
-    if (openOrders != undefined) {
-        var keys = Object.keys(openOrders);
-    }
     for (var key in closedOrders) {
         if (closedOrders[key]['vol_exec'] == 0) {
-            for (i = 0; i < keys.length; i++) {
-                if (openOrders[keys[i]]['userref'] == closedOrders[key]['userref']) {
-                    delete ia.userref[closedOrders[key]['userref']];
-                }
-            }
             delete ia.userref[closedOrders[key]['userref']];
             delete closedOrders[key];
         }
@@ -90,15 +92,10 @@ function getPosition(userref) {
         if (ia.tradeHistory[ia.pendingPositions[i]]['userref'] == userref) {
             var position = ia.pendingPositions[i];
             return position;
-        }else {
-            var position = -1;
-            return position;
         }
     }
-    if (ia.pendingPositions.length == 0) {
-        var position = -1;
-        return position;
-    }
+    var position = -1;
+    return position;
 }
 
 function updateTradeHistory(orders, balance, bid) {
@@ -114,18 +111,20 @@ function updateTradeHistory(orders, balance, bid) {
         var position = getPosition(orders.closedOrders[key]['userref']);
         if (orders.closedOrders[key]['descr']['type'] == 'buy') {
             if (position != -1) {
-                var average = round(ia.tradeHistory[position]['buyPrice'] * ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec']) / (ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
+                var average = round((ia.tradeHistory[position]['buyPrice'] * ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec'])) / (ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
                 ia.tradeHistory[position]['buyPrice'] = average;
                 ia.tradeHistory[position]['buy_exec'] = round(ia.tradeHistory[position]['buy_exec'] + Number(orders.closedOrders[key]['vol_exec']));
                 ia.tradeHistory[position]['buyComission'] = round(ia.tradeHistory[position]['buy_exec'] * ia.tradeHistory[position]['buyPrice'] * config.commission);
+                ia.userref[orders.closedOrders[key]['userref']] = orders.closedOrders[key]['userref'];
             }else {
                 var buyCommission = round(Number(orders.closedOrders[key]['vol_exec']) * Number(orders.closedOrders[key]['price']) * config.commission);
                 var history = {'txid' : key, 'userref' : orders.closedOrders[key]['userref'], 'buyPrice' : Number(orders.closedOrders[key]['price']), 'buy_exec' : Number(orders.closedOrders[key]['vol_exec']), 'volume' : Number(orders.closedOrders[key]['vol']), 'buyCommission' : buyCommission, 'sellPrice' : 0, 'vol_exec' : 0, 'sell_exec' : 0, 'sellCommission' : 0, 'placed' : 'no', 'balance' : 0, 'profit' : 0};
                 ia.tradeHistory.push(history);
                 ia.pendingPositions.push(ia.tradeHistory.length - 1);
+                ia.userref[orders.closedOrders[key]['userref']] = orders.closedOrders[key]['userref'];
             }
         } else {
-            var average = round(ia.tradeHistory[position]['sellPrice'] * ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec']) / (ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
+            var average = round((ia.tradeHistory[position]['sellPrice'] * ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['price']) * Number(orders.closedOrders[key]['vol_exec'])) / (ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['vol_exec'])));
             ia.tradeHistory[position]['sellPrice'] = average;
             ia.tradeHistory[position]['sell_exec'] = round(ia.tradeHistory[position]['sell_exec'] + Number(orders.closedOrders[key]['vol_exec']));
             ia.tradeHistory[position]['sellCommission'] = round(ia.tradeHistory[position]['sell_exec'] * ia.tradeHistory[position]['sellPrice'] * config.commission);
@@ -171,11 +170,37 @@ function updateDecision(bid, ask, balance, openBuy, openOrders) {
     }
     var buyPrice = round(bid + ia.spread);
     var decision = {'type' : 'standby', 'keys' : keys};
+    if (ia.pendingPositions.length != 0) {
+        var lowBuy = lowestBuy();
+    } else {
+        var lowBuy = 0;
+    }
+
+    for (i = 0; i < ia.pendingPositions.length; i++) {
+        if (ia.tradeHistory[ia.pendingPositions[i]]['placed'] == 'no') {
+            decision.type = constants.placeSell;
+            decision.order = 'sell';
+            decision.ordertype = 'limit';
+            decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
+            decision.price = round(ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellPositive / 100));
+            decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'];
+            return decision;
+        } else if (ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellNegative / 100) > bid) {
+            decision.type = constants.updateSell;
+            decision.order = 'sell';
+            decision.price = undefined;
+            decision.ordertype = 'market';
+            decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
+            decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
+            decision.quantity = roundTo8(ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec']);
+            return decision;
+        }
+    }
 
     if (!buyCons && openBuy != '') {
         decision.type = constants.cancel;
         decision.txid = openOrders[openBuy]['userref'];
-    }else if (buyCons && openBuy == '' && ia.pendingPositions.length < config.maxBuy) {
+    }else if (buyCons && openBuy == '' && ia.pendingPositions.length < config.maxBuy && (ia.pendingPositions.length == 0 || lowBuy * (1 - config.multipleBuys / 100) > bid)) {
         var buyBalance = 0.99 * balance[0] / (config.maxBuy - ia.pendingPositions.length);
         decision.order = 'buy';
         decision.type = constants.placeBuy;
@@ -197,28 +222,7 @@ function updateDecision(bid, ask, balance, openBuy, openOrders) {
             decision.price = buyPrice;
             decision.quantity = pendingBuy;
             decision.userref = openOrders[openBuy]['userref'];
-            decision.txid = openBuy;
-        }
-    }else {
-        for (i = 0; i < ia.pendingPositions.length; i++) {
-            if (ia.tradeHistory[ia.pendingPositions[i]]['placed'] == 'no') {
-                decision.type = constants.placeSell;
-                decision.order = 'sell';
-                decision.ordertype = 'limit';
-                decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
-                decision.price = round(ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellPositive / 100));
-                decision.quantity = ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'];
-                return decision;
-            } else if (ia.tradeHistory[ia.pendingPositions[i]]['buyPrice'] * (1 + config.sellNegative / 100) > bid) {
-                decision.type = constants.updateSell;
-                decision.order = 'sell';
-                decision.price = undefined;
-                decision.ordertype = 'market';
-                decision.txid = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
-                decision.userref = ia.tradeHistory[ia.pendingPositions[i]]['userref'];
-                decision.quantity = roundTo8(ia.tradeHistory[ia.pendingPositions[i]]['buy_exec'] - ia.tradeHistory[ia.pendingPositions[i]]['sell_exec']);
-                return decision;
-            }
+            decision.txid = openOrders[openBuy]['userref'];
         }
     }
     return decision;
