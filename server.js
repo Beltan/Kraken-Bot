@@ -30,4 +30,3 @@ io.on('connection', function(socket){
 
 // Bot launch
 launcher.main();
-
