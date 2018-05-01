@@ -138,13 +138,6 @@ function updateTradeHistory(orders, balance, bid) {
     }
 }
 
-function testing(orders) {
-    var test = Object.keys(orders.openOrders);
-    if (ia.pendingPositions.length != 0 && test.length == 0 && ia.tradeHistory[ia.pendingPositions[0]]['placed'] == 'yes') {
-        var a = true;
-    }
-}
-
 function buyConditions(bid) {
     var buyCons = false;
     var buyIncrease = 100 * (bid - ia.localMin) / ia.localMin;
@@ -255,7 +248,6 @@ exports.decide = function(input) {
         var orders = filterOrders(input.openOrders);
         var openBuy = getParameters(orders.openOrders);
         updateTradeHistory(orders, input.balance, input.bid);
-        testing(orders);
         var decision = updateDecision(input.bid, input.ask, input.balance, openBuy, orders.openOrders);
     } else {
         var keys = [];
