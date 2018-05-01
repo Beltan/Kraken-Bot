@@ -22,8 +22,8 @@ exports.getValues = async function () {
         }
         balance[0] = Number(tradeBalances.result['Z' + api.second]);
         balance[1] = Number(tradeBalances.result['X' + api.first]);
-        var bid = Number(response['result'][api.pair]['bids'][0][0]);
-        var ask = Number(response['result'][api.pair]['asks'][0][0]);
+        var bid = Number(response['result'][api.fullPair]['bids'][0][0]);
+        var ask = Number(response['result'][api.fullPair]['asks'][0][0]);
         var value = (bid + ask) / 2;
         console.log(bid + ' ' + ask);
         var values = {bid, ask, value, balance, orders};

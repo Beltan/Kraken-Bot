@@ -86,7 +86,7 @@ var update = function(newValue) {
 }
 
 var buy = function(order, bid) {
-    
+    var quantity = order.vol - order.vol_exec;
     /*
     if (getRandomInt() == 0) {
         var quantity = order.vol - order.vol_exec;
@@ -98,7 +98,7 @@ var buy = function(order, bid) {
         }
     }
     */
-    var quantity = order.vol - order.vol_exec;
+
     var price = (order.vol_exec * order.price + bid * quantity) / (order.vol_exec + quantity);
     var commission = quantity * bid * config.commission;
 
@@ -110,7 +110,8 @@ var buy = function(order, bid) {
 }
 
 var sell = function(order, value) {
-/*
+    var quantity = order.vol - order.vol_exec;
+    /*
     if (order.descr.ordertype != 'market') {
         if (getRandomInt() == 0) {
             var quantity = order.vol - order.vol_exec;
@@ -124,13 +125,13 @@ var sell = function(order, value) {
     } else {
         var quantity = order.vol - order.vol_exec;
     }
-*/
+    */
     if (order.price == undefined) {
         var truePrice = value;
     } else {
         var truePrice = order.price;
     }
-    var quantity = order.vol - order.vol_exec;
+
     var price = (order.vol_exec * truePrice + value * quantity) / (order.vol_exec + quantity);
     var commission = quantity * value * config.commission;
 
@@ -172,7 +173,6 @@ exports.executeFunctions = executeFunctions;
 exports.getValues = function() {
     var value;
     var balance = [];
-
     if (api.index < api.historic.length){
         value = api.historic[api.index];
         api.index++;
