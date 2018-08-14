@@ -68,7 +68,11 @@ function graphObject(id, datasets, length, options) {
     return obj;
 }
 
-exports.getGraph = function(id, data, key = null, options = {}, filters = []) {
+exports.getGraph = function(id, data, key = null, options = {}, splitters = [], filters = []) {
+
+    for(var i = 0; i < splitters.length; i++) {
+        
+    }
 
     if(filters.length == 0) {
         filters.push(a => true);
