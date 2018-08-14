@@ -9,8 +9,13 @@ function roundTo2(number) {
     return number;
 }
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
+function getRandomInt() {
+    var number = Math.random();
+    if (number < 0.5) {
+        return 0;
+    } else {
+        return 1;
+    }
   }
 
 var csvToArray = function() {
@@ -19,14 +24,14 @@ var csvToArray = function() {
 }
 
 // Order functions
-var placeOrder = function({type, order, ordertype, quantity, price, userref = null}) {
+var placeOrder = function({type, order, ordertype, quantity, price, userref}) {
     
     api.txid++;
     
     var descr = {'type' : order, ordertype, price};
 
     var result = {txid : api.txid, price, vol : quantity, userref, descr};
-    
+
     //init values order
     result.vol_exec = 0;
     result.status = constants.open;
@@ -40,7 +45,7 @@ var placeOrder = function({type, order, ordertype, quantity, price, userref = nu
 var processOrder = function(txid, updatedValue) {
     var order = api.openOrders[txid];
     var quantity = 0;
-    var price;
+    var price = undefined;
     var bid = updatedValue * 0.9995;
     var ask = updatedValue * 1.0005;
 
@@ -57,7 +62,9 @@ var processOrder = function(txid, updatedValue) {
     // update the order       
     api.openOrders[txid].vol_exec += quantity;
     //this should be the mean
-    api.openOrders[txid].price = price;
+    if (price != undefined) {
+        api.openOrders[txid].price = price;
+    }
     if(Math.abs(api.openOrders[txid].vol_exec - api.openOrders[txid].vol) <= 0.1) {
         api.openOrders[txid].status = constants.closed;
     }
@@ -79,28 +86,57 @@ var update = function(newValue) {
 }
 
 var buy = function(order, bid) {
+    var quantity = order.vol - order.vol_exec;
+    /*
+    if (getRandomInt() == 0) {
+        var quantity = order.vol - order.vol_exec;
+    } else {
+        if (order.vol_exec < 0.6 * order.vol) {
+            var quantity = order.vol * 0.4;
+        } else {
+            var quantity = order.vol - order.vol_exec;
+        }
+    }
+    */
 
-    // get the real quantity
-    var quantity = order.vol;
-    var price = bid;
-
-    var commission = quantity * price * config.commission;
+    var price = (order.vol_exec * order.price + bid * quantity) / (order.vol_exec + quantity);
+    var commission = quantity * bid * config.commission;
 
     // update balances
-    api.balance[api.second] = roundTo2(api.balance[api.second] - commission - quantity * price);
+    api.balance[api.second] = roundTo2(api.balance[api.second] - commission - quantity * bid);
     api.balance[api.first] = roundTo2(api.balance[api.first] + quantity);
 
     return {price, quantity};
 }
 
 var sell = function(order, value) {
-    var quantity = order.vol;
-    var price = value;
+    var quantity = order.vol - order.vol_exec;
+    /*
+    if (order.descr.ordertype != 'market') {
+        if (getRandomInt() == 0) {
+            var quantity = order.vol - order.vol_exec;
+        } else {
+            if (order.vol_exec < 0.6 * order.vol) {
+                var quantity = order.vol * 0.4;
+            } else {
+                var quantity = order.vol - order.vol_exec;
+            }
+        }
+    } else {
+        var quantity = order.vol - order.vol_exec;
+    }
+    */
+    if (order.price == undefined) {
+        var truePrice = value;
+    } else {
+        var truePrice = order.price;
+    }
 
-    var commission = quantity * price * config.commission;
+    var price = (order.vol_exec * truePrice + value * quantity) / (order.vol_exec + quantity);
+    var commission = quantity * value * config.commission;
 
     // update balances
-    api.balance[api.second] = roundTo2(api.balance[api.second] + quantity * price - commission);
+    api.balance[api.second] = roundTo2(api.balance[api.second] + quantity * value - commission);
     api.balance[api.first] = roundTo2(api.balance[api.first] - quantity);
 
     return {price, quantity};
@@ -113,7 +149,7 @@ var placeDecisionOrder = function(decision) {
 
 var cancelOrder = function(decision) {
     for (var key in api.openOrders) {
-        if (api.openOrders[key].status == constants.open && api.openOrders[key]['userref'] == decision.userref) {
+        if (api.openOrders[key].status == constants.open && api.openOrders[key]['userref'] == decision.txid) {
             api.openOrders[key].status = constants.canceled;
             return 1;
         }
@@ -137,7 +173,6 @@ exports.executeFunctions = executeFunctions;
 exports.getValues = function() {
     var value;
     var balance = [];
-
     if (api.index < api.historic.length){
         value = api.historic[api.index];
         api.index++;

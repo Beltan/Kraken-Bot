@@ -1,0 +1,5 @@
+- Make all orders with the same general parameters.
+- Decisions should be bases on current parameters and if another buy is executed price should be averaged.
+- Historic should be updated accordingly.
+- Use some library to have good mathematical precision.
+- Generate indicators based on the information retrieved.
