@@ -11,25 +11,19 @@ function sleep(ms) {
 exports.main = async function() {
     api.initialize();
     ia.initialize();
-    while (api.continue()){
-        if (!config.simulation) {
-            try {
-                await sleep(3000);
-            } catch (e) {}
-        }
-        try {
-            var values = await api.getValues();
-        } catch (e) {}
-        if (values != undefined) {
-            var decision = ia.decide(values);
-            try {
-                await api.execute(decision);
-            } catch (e) {}
-        }
 
-        // Save data to have a track of what is the bot doing
-        var stats = {values : values, decision : decision};
-        data.push(stats);
+    while (api.continue()){
+        var values = await api.getValues();
+        if (values) {
+
+            var decision = ia.decide(values);
+            await api.execute(decision);
+
+            // Save data to have a track of what is the bot doing
+            var stats = {values : values, decision : decision};
+            data.push(stats);
+        }
+       
     }
 
     console.log("Finished");
