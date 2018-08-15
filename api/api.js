@@ -5,7 +5,13 @@ const key = config.key; // API Key
 const secret = config.secret; // API Private Key
 const kraken = new KrakenClient(key, secret);
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 exports.getValues = async function () {
+    await sleep(3000);
+
     var count = 1;
     var pair = api.pair;
     var txid = '';

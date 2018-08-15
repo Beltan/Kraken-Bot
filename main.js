@@ -4,10 +4,6 @@ var config = require('./config').api;
 
 var data = [];
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 exports.main = async function() {
     api.initialize();
     ia.initialize();
