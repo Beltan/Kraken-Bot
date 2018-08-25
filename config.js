@@ -1,3 +1,4 @@
+// we should move this to the borker too
 var pair = "XRPUSD";
 
 var api = {
@@ -8,8 +9,11 @@ var api = {
     commission: 0.0016
 }
 
+var broker = {
+    commission: 0.0016 // Commission percentage
+}
+
 var ia = {
-    commission: 0.0016, // Commission percentage
     sellPositive: 2,    // Percentage after which a winning trade will be closed.
     sellNegative: -10,  // Percentage after which a losing trade will be closed.
     local: 45,          // Number of last values checked for the local minimum.
@@ -32,3 +36,4 @@ ia.pair = pair;
 
 module.exports.ia = ia;
 module.exports.api = api;
+module.exports.broker = broker;

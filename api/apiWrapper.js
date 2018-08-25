@@ -26,7 +26,7 @@ var addToHistory = function(result) {
 
 exports.execute = function(decision) {
     if(decision.type != "standby") {
-        var result = api.executeFunctions[decision.type](decision);
+        var result = await api.executeFunctions[decision.type](decision);
         // See previous comment
         // addToHistory(result);
     } else {

@@ -8,16 +8,21 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function continues() {
+    api.continue();
+    ia.continue();
+}
+
 exports.main = async function() {
     api.initialize();
     ia.initialize();
 
-    while (api.continue()){
+    while (continues()){
         var values = await api.getValues();
         if (values) {
 
             var decision = ia.decide(values);
-            await api.execute(decision);
+            api.execute(decision);
 
             // Save data to have a track of what is the bot doing
             var stats = {values : values, decision : decision};
