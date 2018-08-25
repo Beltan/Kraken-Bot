@@ -4,10 +4,6 @@ var config = require('./config').api;
 
 var data = [];
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function continues() {
     api.continue();
     ia.continue();
