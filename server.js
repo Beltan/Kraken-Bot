@@ -6,10 +6,10 @@ app.use(express.static('public'));
 var io = require('socket.io')(http);
 
 // Bot requires
-launcher = require('./main');
+var launcher = require('./main');
 
 // Graphs requires
-graph = require('./graphsData');
+var graph = require('./web/graphsData');
 
 // Server init
 http.listen(3000, function() {

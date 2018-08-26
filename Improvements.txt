@@ -3,3 +3,8 @@
 - Historic should be updated accordingly.
 - Use some library to have good mathematical precision.
 - Generate indicators based on the information retrieved.
+
+
+- Good ui
+
+- Tests

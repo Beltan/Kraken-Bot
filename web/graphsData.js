@@ -1,5 +1,3 @@
-var api = require('./api/apiWrapper');
-
 var chartColors = {
     blue: 'rgb(54, 162, 235)',
     red: 'rgb(255, 99, 132)',
@@ -135,5 +133,5 @@ exports.getHistoricGraph = function(column, filterColumn = null, filterValue = n
         name += " (scaled)"
     }
   
-    return this.getGraph(name, api.getTradeHistoric(), column, options, filterFunctions);
+    return this.getGraph(name, null, column, options, filterFunctions);
 }

@@ -2,7 +2,7 @@
   "name": "kraken-bot",
   "version": "0.0.1",
   "description": "A kraken bot",
-  "main": "lib/server.js",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.16.2",
     "fs": "*",

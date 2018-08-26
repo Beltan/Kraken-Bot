@@ -5,37 +5,20 @@ var api;
 if (config.simulation) api = require('./simulationApi');
 else api = require('./api');
 
-// tradeHistoric : { txid : [decisionResult, movement, decisionResult], txid : ...}
 var tradeHistoric;
-
-// ---- PRIVATE FUNCTIONS ----
-
-/*  Needs update
-
-var addToHistory = function(result) {
-    if(result.type == constants.placeBuy) {
-        tradeHistoric[result.txid] = [result];
-    }
-    else {
-        tradeHistoric[result.position].push(result);
-    }
-}
-*/
 
 // ---- PUBLIC FUNCTIONS -----
 
-exports.execute = function(decision) {
-    if(decision.type != "standby") {
-        var result = await api.executeFunctions[decision.type](decision);
-        // See previous comment
-        // addToHistory(result);
-    } else {
-        api.keys = decision.keys;
+exports.execute = async function(instructions) {
+
+    for(var i in instructions) {
+        var instruction = instructions[i];
+        var result = await api.executeFunctions[instruction.type](instruction);
     }
 }
 
-exports.initialize = function(pair) {
-    api.initialize(pair);
+exports.init = function(pair) {
+    api.init(pair);
     api.keys = [];
     tradeHistoric = {};
 }

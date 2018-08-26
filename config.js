@@ -13,6 +13,7 @@ var broker = {
     commission: 0.0016 // Commission percentage
 }
 
+/*
 var ia = {
     sellPositive: 2,    // Percentage after which a winning trade will be closed.
     sellNegative: -10,  // Percentage after which a losing trade will be closed.
@@ -30,10 +31,15 @@ var ia = {
     krakenMinBCH: 0.002,// Minimum BCH that can be traded
     spreadBCH: 0.1      // Minimum BCH spread
 }
+*/
 
-api.pair = pair;
-ia.pair = pair;
+var ia = {
+    aiName : "null",
+    managerName : "generic",
+    modules : ["null"]
+}
 
 module.exports.ia = ia;
 module.exports.api = api;
 module.exports.broker = broker;
+module.exports.pair = pair;

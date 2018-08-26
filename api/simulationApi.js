@@ -1,5 +1,6 @@
 const fs = require('fs');
 var constants = require('../constants');
+var config = require('../config');
 
 var api = {};
 
@@ -19,7 +20,7 @@ function getRandomInt() {
   }
 
 var csvToArray = function() {
-    var stuff = fs.readFileSync('./historics/' + api.pair + '.csv', 'utf8');
+    var stuff = fs.readFileSync('./historics/data/' + api.pair + '.csv', 'utf8');
     api.historic = stuff.split(',');
 }
 
@@ -193,7 +194,7 @@ exports.getValues = function() {
     return values;
 }
 
-exports.initialize = function() {
+exports.init = function() {
     var pair = config.pair;
     api.pair = pair;
     api.first = pair.substring(0, 3);

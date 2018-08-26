@@ -1,28 +1,22 @@
-api = require('./api/apiWrapper');
-ia = require('./ia');
+var api = require('./api/apiWrapper');
+var ai = require('./ai/aiCore');
 var config = require('./config').api;
 
 var data = [];
 
 function continues() {
-    api.continue();
-    ia.continue();
+    return api.continue() && ai.continue();
 }
 
 exports.main = async function() {
-    api.initialize();
-    ia.initialize();
+    api.init();
+    ai.init();
 
     while (continues()){
         var values = await api.getValues();
         if (values) {
-
-            var decision = ia.decide(values);
-            api.execute(decision);
-
-            // Save data to have a track of what is the bot doing
-            var stats = {values : values, decision : decision};
-            data.push(stats);
+            var instructions = ai.decide(values);
+            await api.execute(instructions);
         }
        
     }
