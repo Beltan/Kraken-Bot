@@ -52,7 +52,7 @@ var callInOrder = function(method, values = null) {
 
     var decision = call(ai, method, values, params);
     params.decision = decision;
-    if(manager != null) decision = call(manager, method, values, params);
+    if(manager != null) decision = call(manager, method, params);
     
     return decision;
 }
