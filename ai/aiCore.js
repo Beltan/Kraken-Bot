@@ -30,10 +30,9 @@ if(config.hasOwnProperty("managerName") && config.managerName != "") {
     manager = require("./managers/" + config.managerName);
 }
 
-var call = function(obj, method, params = null) {
+var call = function(obj, method, values, params = null) {
     if(method in obj) {
-        if(params == null) return obj[method]();
-        else return obj[method](params);
+        return obj[method](values, params);
     }
     else {
         console.log("Error calling method: " + method);
@@ -42,24 +41,24 @@ var call = function(obj, method, params = null) {
     }
 }
 
-var callInOrder = function(method) {
+var callInOrder = function(method, values = null) {
 
     var params = {};
     // for all the needed modules
     Object.keys(modules).forEach(function(moduleName) {
         var currentModule = modules[moduleName];
-        params[moduleName] = call(currentModule, method, params);
+        params[moduleName] = call(currentModule, method, values, params);
     });
 
-    var decision = call(ai, method, mod, params);
+    var decision = call(ai, method, values, params);
     params.decision = decision;
-    if(manager != null) decision = call(manager, method, params);
+    if(manager != null) decision = call(manager, method, values, params);
     
     return decision;
 }
 
 exports.decide = function(values) {
-    return callInOrder("update");
+    return callInOrder("update", values);
 }
 
 // init all modules

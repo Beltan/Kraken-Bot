@@ -9,9 +9,13 @@ function continues() {
 }
 
 exports.main = async function() {
+
+    console.log("Started");
+
     api.init();
     ai.init();
 
+    console.log("Started processing values");
     while (continues()){
         var values = await api.getValues();
         if (values) {
