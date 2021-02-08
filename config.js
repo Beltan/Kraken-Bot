@@ -1,4 +1,4 @@
-// we should move this to the borker too
+// we should move this to the broker too
 var pair = "XRPUSD";
 
 var api = {

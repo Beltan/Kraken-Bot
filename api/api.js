@@ -1,14 +1,16 @@
 const constants = require('../constants');
 const config = require('./../config').api;
-const KrakenClient = require('kraken-api');
-const key = config.key; // API Key
-const secret = config.secret; // API Private Key
-const kraken = new KrakenClient(key, secret);
+const Binance = require('node-binance-api');
+const binance = new Binance().options({
+    APIKEY: config.key,
+    APISECRET: config.secret
+});
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+//Move to websocket
 exports.getValues = async function () {
     await sleep(3000);
 
@@ -44,7 +46,7 @@ exports.getValues = async function () {
 var cancelOrder = async function(decision) {
     var txid = decision.txid;
     try {
-        var order = await kraken.api('CancelOrder', {txid});
+        var order = await binance.cancel(api.pair, txid);
         console.log('Order ' + txid + ' canceled succesfully');
         return order;
     } catch (e) {
@@ -59,10 +61,17 @@ var placeOrder = async function(decision) {
     var price = decision.price;
     var volume = decision.quantity;
     var ordertype = decision.ordertype;
-    var userref = decision.userref;
+
     try {
-        var order = await kraken.api('AddOrder', {pair, type, price, volume, ordertype, userref});
-        decision.keys.push(order.result.txid[0]);
+        if (ordertype === 'market') {
+            if (type === 'buy') var order = await binance.marketBuy(pair, volume);
+            else if (type === 'sell') var order = await binance.marketSell(pair, volume);
+        } else {
+            if (type === 'buy') var order = await binance.buy(pair, volume, price);
+            else if (type === 'sell') var order = await binance.sell(pair, volume, price);
+        }
+
+        decision.keys.push(order.result.orderId);
         api.keys = decision.keys;
         console.log(type + ' order placed succesfully -> ' + type + ' ' + volume + ' ' + pair + ' @ ' + ordertype + ' ' + price);
         return order;
