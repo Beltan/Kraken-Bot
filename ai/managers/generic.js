@@ -1,14 +1,16 @@
+const constants = require('../../constants');
+
 exports.dependencies = [];
 
 exports.update = function(params) {
 
     // we can get the decision
-    var decision = params.decision;
+    let decision = params.decision;
 
     // and we need to transalte it to an instruction list
-    var instructions = [];
+    let instructions = [];
     
-    if(!(decision.type == "standBy")) {
+    if (decision.type !== constants.standBy) {
 
     }
 

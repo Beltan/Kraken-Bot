@@ -1,16 +1,11 @@
-// we should move this to the broker too
-var pair = "XRPUSD";
-
 var api = {
     key: '', // API Key
     secret: '', // API Private Key
-    simulation: true,
-    saveAllHistory : true,
-    commission: 0.0016
+    simulation: false,
 }
 
 var broker = {
-    commission: 0.0016 // Commission percentage
+    pair: ['XRPUSDT']
 }
 
 /*
@@ -42,4 +37,3 @@ var ia = {
 module.exports.ia = ia;
 module.exports.api = api;
 module.exports.broker = broker;
-module.exports.pair = pair;

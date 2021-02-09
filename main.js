@@ -1,8 +1,7 @@
-var api = require('./api/apiWrapper');
-var ai = require('./ai/aiCore');
-var config = require('./config').api;
+const api = require('./api/apiWrapper');
+const ai = require('./ai/aiCore');
 
-var data = [];
+let data = [];
 
 function continues() {
     return api.continue() && ai.continue();
@@ -17,12 +16,11 @@ exports.main = async function() {
 
     console.log("Started processing values");
     while (continues()){
-        var values = await api.getValues();
+        let values = await api.getValues();
         if (values) {
-            var instructions = ai.decide(values);
+            let instructions = ai.decide(values);
             await api.execute(instructions);
         }
-       
     }
 
     console.log("Finished");

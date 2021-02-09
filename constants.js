@@ -4,6 +4,7 @@ constants.placeSell = "placeSell";
 constants.updateBuy = 'updateBuy';
 constants.updateSell = 'updateSell';
 constants.cancel = 'cancel';
+constants.standBy = 'standBy';
 
 constants.open = 'open';
 constants.pending = "pending";

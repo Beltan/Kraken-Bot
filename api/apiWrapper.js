@@ -1,30 +1,21 @@
 const config = require('./../config').api;
 const constants = require('./../constants');
 
-var api;
+let api;
 if (config.simulation) api = require('./simulationApi');
 else api = require('./api');
-
-var tradeHistoric;
 
 // ---- PUBLIC FUNCTIONS -----
 
 exports.execute = async function(instructions) {
-
-    for(var i in instructions) {
-        var instruction = instructions[i];
-        var result = await api.executeFunctions[instruction.type](instruction);
+    for (let i in instructions) {
+        let instruction = instructions[i];
+        await api.executeFunctions[instruction.type](instruction);
     }
 }
 
-exports.init = function(pair) {
-    api.init(pair);
-    api.keys = [];
-    tradeHistoric = {};
-}
-
-exports.getTradeHistoric = function() {
-    return tradeHistoric;
+exports.init = function() {
+    api.init();
 }
 
 exports.continue = api.continue;
