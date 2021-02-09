@@ -22,6 +22,17 @@ exports.getValues = async function () {
     }
 }
 
+exports.getHistoric = async function () {
+    await sleep(1000);
+
+    try {
+        let values = await binance.candlesticks(broker.pair[0], broker.interval);
+        return values;
+    } catch (e) {
+        console.log('Error while retrieving info, trying again... -> ' + e);
+    }
+}
+
 let cancelOrder = async function(decision) {
     let txid = decision.txid;
     try {
