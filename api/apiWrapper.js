@@ -14,6 +14,17 @@ exports.execute = async function(instructions) {
     }
 }
 
+exports.getHistoric = async function () {
+    await sleep(1000);
+
+    try {
+        let values = await binance.candlesticks(broker.pair[0], broker.interval);
+        return values;
+    } catch (e) {
+        console.log('Error while retrieving info, trying again... -> ' + e);
+    }
+}
+
 exports.init = function() {
     api.init();
 }
