@@ -18,7 +18,8 @@ exports.getHistoric = async function () {
     await sleep(1000);
 
     try {
-        let values = await binance.candlesticks(broker.pair[0], broker.interval);
+        let limit = Math.min(broker.limit, 500);
+        let values = await binance.candlesticks(broker.pair[0], broker.interval, null, limit);
         return values;
     } catch (e) {
         console.log('Error while retrieving info, trying again... -> ' + e);
