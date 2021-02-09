@@ -2,9 +2,9 @@ exports.dependencies = [];
 
 exports.update = function(params) {
 
-    var values = params.values;
+    let values = params.values;
 
-    var decision = {};
+    let decision = {};
     return decision;
 }
 

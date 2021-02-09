@@ -1,16 +1,16 @@
-var config = require('./../config').ia;
+const config = require('./../config').ia;
 
-var modules = {};
+let modules = {};
 
-for(var i in config.modulesUsed) {
-    var file = config.modulesUsed[i];
+for(let i in config.modulesUsed) {
+    let file = config.modulesUsed[i];
 
-    var mod = require("./modules/" + file);
+    let mod = require("./modules/" + file);
     mod.name = file;
 
     // check that module dependencies are present and executed before
-    for(var j in mod.dependencies) {
-        var dependency = mod.dependencies[j];
+    for(let j in mod.dependencies) {
+        let dependency = mod.dependencies[j];
         if(!modules.hasOwnProperty(dependency)) {
             console.log("Dependency " + dependency + " of module " + file + 
                 " is not present. Check correct order of dependencies.");
@@ -22,15 +22,15 @@ for(var i in config.modulesUsed) {
 };
 
 // ai name is mandatory 
-var ai = require("./ais/" + config.aiName);
+let ai = require("./ais/" + config.aiName);
 
 // if there is a manager, load it
-var manager = null;
+let manager = null;
 if(config.hasOwnProperty("managerName") && config.managerName != "") {
     manager = require("./managers/" + config.managerName);
 }
 
-var call = function(obj, method, values, params = null) {
+let call = function(obj, method, values, params = null) {
     if(method in obj) {
         return obj[method](values, params);
     }
@@ -41,16 +41,16 @@ var call = function(obj, method, values, params = null) {
     }
 }
 
-var callInOrder = function(method, values = null) {
+let callInOrder = function(method, values = null) {
 
-    var params = {};
+    let params = {};
     // for all the needed modules
     Object.keys(modules).forEach(function(moduleName) {
-        var currentModule = modules[moduleName];
+        let currentModule = modules[moduleName];
         params[moduleName] = call(currentModule, method, values, params);
     });
 
-    var decision = call(ai, method, values, params);
+    let decision = call(ai, method, values, params);
     params.decision = decision;
     if(manager != null) decision = call(manager, method, params);
     
