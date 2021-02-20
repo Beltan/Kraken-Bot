@@ -1,17 +1,17 @@
-var api = {
+let api = {
     key: '', // API Key
     secret: '', // API Private Key
     simulation: false,
 }
 
-var broker = {
+let broker = {
     pair: ['XRPUSDT'],
     interval: '5m',     // Intervals: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
     limit: 500
 }
 
 /*
-var ia = {
+let ia = {
     sellPositive: 2,    // Percentage after which a winning trade will be closed.
     sellNegative: -10,  // Percentage after which a losing trade will be closed.
     local: 45,          // Number of last values checked for the local minimum.
@@ -30,7 +30,7 @@ var ia = {
 }
 */
 
-var ia = {
+let ia = {
     aiName : "null",
     managerName : "generic",
     modules : ["null"]

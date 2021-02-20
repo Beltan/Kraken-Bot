@@ -1,15 +1,15 @@
 // Server requires
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
+let express = require('express');
+let app = express();
+let http = require('http').Server(app);
 app.use(express.static('public'));
-var io = require('socket.io')(http);
+let io = require('socket.io')(http);
 
 // Bot requires
-var launcher = require('./main');
+let launcher = require('./main');
 
 // Graphs requires
-var graph = require('./web/graphsData');
+let graph = require('./web/graphsData');
 
 // Server init
 http.listen(3000, function() {

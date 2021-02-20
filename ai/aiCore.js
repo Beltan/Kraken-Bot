@@ -57,8 +57,8 @@ let callInOrder = function(method, values = null) {
     return decision;
 }
 
-exports.decide = function(values) {
-    return callInOrder("update", values);
+exports.decide = function() {
+    return callInOrder("update");
 }
 
 // init all modules

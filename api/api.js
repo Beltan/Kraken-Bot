@@ -1,6 +1,7 @@
+let store = require('../store');
 const constants = require('../constants');
-const config = require('./../config').api;
-const broker = require('./../config').broker;
+const config = require('../config').api;
+const broker = require('../config').broker;
 const Binance = require('node-binance-api');
 const binance = new Binance().options({
     APIKEY: config.key,
@@ -15,7 +16,19 @@ exports.getValues = async function () {
     await sleep(1000);
 
     try {
-        let values = await binance.depth(broker.pair[0]);
+        store.depth = await binance.depth(broker.pair[0]);
+        store.balance = await binance.balance();
+        store.openorders = await binance.openOrders(broker.pair[0]);
+        store.candles = await getHistoric();
+    } catch (e) {
+        console.log('Error while retrieving info, trying again... -> ' + e);
+    }
+}
+
+let getHistoric = async function () {
+    try {
+        let limit = Math.min(broker.limit, 500);
+        let values = await binance.candlesticks(broker.pair[0], broker.interval, null, limit);
         return values;
     } catch (e) {
         console.log('Error while retrieving info, trying again... -> ' + e);
