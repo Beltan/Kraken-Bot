@@ -1,4 +1,5 @@
 let store = require('../store');
+const helper = require('../helper');
 const constants = require('../constants');
 const config = require('../config').api;
 const broker = require('../config').broker;
@@ -8,28 +9,16 @@ const binance = new Binance().options({
     APISECRET: config.secret
 });
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 exports.getValues = async function () {
-    await sleep(1000);
+    await helper.sleep(1000);
 
     try {
         store.depth = await binance.depth(broker.pair[0]);
         store.balance = await binance.balance();
         store.openorders = await binance.openOrders(broker.pair[0]);
-        store.candles = await getHistoric();
-    } catch (e) {
-        console.log('Error while retrieving info, trying again... -> ' + e);
-    }
-}
-
-let getHistoric = async function () {
-    try {
-        let limit = Math.min(broker.limit, 500);
-        let values = await binance.candlesticks(broker.pair[0], broker.interval, null, limit);
-        return values;
+        store.candles['5m'] = await helper.getHistoric(broker.pair[0], '5m');
+        store.candles['1h'] = await helper.getHistoric(broker.pair[0], '1h');
+        store.candles['1d'] = await helper.getHistoric(broker.pair[0], '1d');
     } catch (e) {
         console.log('Error while retrieving info, trying again... -> ' + e);
     }

@@ -1,5 +1,4 @@
 const config = require('./../config').api;
-const constants = require('./../constants');
 
 let api;
 if (config.simulation) api = require('./simulationApi');

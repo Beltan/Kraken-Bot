@@ -2,7 +2,7 @@ let data = {
     depth: {},
     balance: {},
     openorders: {},
-    candles: {}
+    candles: []
 };
 
 module.exports = data;
