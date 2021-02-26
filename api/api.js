@@ -63,7 +63,6 @@ let placeOrder = async function(decision) {
             else if (type === 'sell') order = await binance.sell(pair, volume, price);
         }
 
-        decision.keys.push(order.orderId);
         console.log(type + ' order placed succesfully -> ' + type + ' ' + volume + ' ' + pair + ' @ ' + ordertype + ' ' + price);
         return order;
     }
