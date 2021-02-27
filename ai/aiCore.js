@@ -2,17 +2,17 @@ const config = require('./../config').ia;
 
 let modules = {};
 
-for(let i in config.modulesUsed) {
+for (let i in config.modulesUsed) {
     let file = config.modulesUsed[i];
 
     let mod = require("./modules/" + file);
     mod.name = file;
 
     // check that module dependencies are present and executed before
-    for(let j in mod.dependencies) {
+    for (let j in mod.dependencies) {
         let dependency = mod.dependencies[j];
-        if(!modules.hasOwnProperty(dependency)) {
-            console.log("Dependency " + dependency + " of module " + file + 
+        if (!modules.hasOwnProperty(dependency)) {
+            console.log("Dependency " + dependency + " of module " + file +
                 " is not present. Check correct order of dependencies.");
             process.exit(1);
         }
@@ -26,17 +26,16 @@ let ai = require("./ais/" + config.aiName);
 
 // if there is a manager, load it
 let manager = null;
-if(config.hasOwnProperty("managerName") && config.managerName != "") {
+if (config.hasOwnProperty("managerName") && config.managerName != "") {
     manager = require("./managers/" + config.managerName);
 }
 
 let call = function(obj, method, values, params = null) {
-    if(method in obj) {
+    if (method in obj) {
         return obj[method](values, params);
-    }
-    else {
+    } else {
         console.log("Error calling method: " + method);
-        console.log("Method doesn't exists");
+        console.log("Method doesn't exist");
         process.exit(1);
     }
 }
@@ -52,8 +51,8 @@ let callInOrder = function(method, values = null) {
 
     let decision = call(ai, method, values, params);
     params.decision = decision;
-    if(manager != null) decision = call(manager, method, params);
-    
+    if (manager != null) decision = call(manager, method, params);
+
     return decision;
 }
 

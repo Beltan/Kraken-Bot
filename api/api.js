@@ -9,7 +9,7 @@ const binance = new Binance().options({
     APISECRET: config.secret
 });
 
-exports.getValues = async function () {
+exports.getValues = async function() {
     await helper.sleep(1000);
 
     try {
@@ -54,8 +54,7 @@ let placeOrder = async function(decision) {
 
         console.log(type + ' order placed succesfully -> ' + type + ' ' + volume + ' ' + pair + ' @ ' + ordertype + ' ' + price);
         return order;
-    }
-    catch (e) {
+    } catch (e) {
         console.log('Error while placing ' + type + ', ' + type + ' not placed. Trying again... -> ' + e);
     }
 }

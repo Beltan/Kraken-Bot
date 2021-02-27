@@ -1,5 +1,6 @@
 let store = require('../store');
 const helper = require('../helper');
+const simexchange = require('./simulationExchange');
 const constants = require('../constants');
 const config = require('../config').api;
 const broker = require('../config').broker;
@@ -9,13 +10,13 @@ const binance = new Binance().options({
     APISECRET: config.secret
 });
 
-exports.getValues = async function () {
+exports.getValues = async function() {
     await helper.sleep(1000);
 
     try {
         store.depth = await binance.depth(broker.pair[0]);
-        store.balance = await binance.balance();
-        store.openorders = await binance.openOrders(broker.pair[0]);
+        //store.balance = simexchange.balance();
+        //store.openorders = simexchange.openOrders(broker.pair[0]);
         store.candles['5m'] = await helper.getHistoric(broker.pair[0], '5m');
         store.candles['1h'] = await helper.getHistoric(broker.pair[0], '1h');
         store.candles['1d'] = await helper.getHistoric(broker.pair[0], '1d');
@@ -25,7 +26,8 @@ exports.getValues = async function () {
 }
 
 // and then we add the functions to the object
-let executeFunctions = {};/*
+let executeFunctions = {};
+/*
 executeFunctions[constants.placeBuy] = placeDecisionOrder;
 executeFunctions[constants.placeSell] = placeDecisionOrder;
 executeFunctions[constants.cancel] = cancelOrder;
