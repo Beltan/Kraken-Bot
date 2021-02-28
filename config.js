@@ -5,7 +5,17 @@ let api = {
 }
 
 let broker = {
-    pair: ['XRPUSDT']
+    pair: [{
+            first: 'XRP', 
+            second: 'USDT'
+        }]
+}
+
+let simulation = {
+    startingBalance: {
+        'USDT': 100,
+        'XRP': 0
+    }
 }
 
 /*
@@ -37,3 +47,4 @@ let ia = {
 module.exports.ia = ia;
 module.exports.api = api;
 module.exports.broker = broker;
+module.exports.simlation = simulation;

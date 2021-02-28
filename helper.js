@@ -22,3 +22,7 @@ exports.getHistoric = async function (pair, interval, options = {}) {
         console.log('Error while retrieving info, trying again... -> ' + e);
     }
 }
+
+exports.getPair = function (pair){
+    return pair.first + pair.second;
+}

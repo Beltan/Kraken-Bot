@@ -13,12 +13,12 @@ exports.getValues = async function () {
     await helper.sleep(1000);
 
     try {
-        store.depth = await binance.depth(broker.pair[0]);
+        store.depth = await binance.depth(helper.getPair(broker.pair[0]));
         store.balance = await binance.balance();
-        store.openorders = await binance.openOrders(broker.pair[0]);
-        store.candles['5m'] = await helper.getHistoric(broker.pair[0], '5m');
-        store.candles['1h'] = await helper.getHistoric(broker.pair[0], '1h');
-        store.candles['1d'] = await helper.getHistoric(broker.pair[0], '1d');
+        store.openorders = await binance.openOrders(helper.getPair(broker.pair[0]));
+        store.candles['5m'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '5m');
+        store.candles['1h'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1h');
+        store.candles['1d'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1d');
     } catch (e) {
         console.log('Error while retrieving info, trying again... -> ' + e);
     }
@@ -27,7 +27,7 @@ exports.getValues = async function () {
 let cancelOrder = async function(decision) {
     let txid = decision.txid;
     try {
-        let order = await binance.cancel(broker.pair[0], txid);
+        let order = await binance.cancel(helper.getPair(broker.pair[0]), txid);
         console.log('Order ' + txid + ' canceled succesfully');
         return order;
     } catch (e) {
@@ -36,7 +36,7 @@ let cancelOrder = async function(decision) {
 }
 
 let placeOrder = async function(decision) {
-    let pair = broker.pair[0];
+    let pair = helper.getPair(broker.pair[0]);
     let type = decision.order;
     let price = decision.price;
     let volume = decision.quantity;
