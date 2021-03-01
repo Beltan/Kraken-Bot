@@ -39,9 +39,9 @@ let ia = {
 */
 
 let ia = {
-    aiName : "null",
-    managerName : "generic",
-    modules : ["null"]
+    aiName: "null",
+    managerName: "generic",
+    modulesUsed: ["localMinMax"]
 }
 
 module.exports.ia = ia;

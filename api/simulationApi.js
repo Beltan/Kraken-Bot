@@ -1,5 +1,6 @@
 let store = require('../store');
 const helper = require('../helper');
+const simexchange = require('./simulationExchange');
 const constants = require('../constants');
 const config = require('../config').api;
 const broker = require('../config').broker;
@@ -46,12 +47,13 @@ exports.getValues = async function () {
         store.candles['5m'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '5m');
         store.candles['1h'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1h');
         store.candles['1d'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1d');
+
     } catch (e) {
         console.log('Error while retrieving info, trying again... -> ' + e);
     }
 }
 
-let placeSell = async function(decision) {
+let placeBuy = async function(decision) {
     let total = math.multiply(decision.price, decision.quantity);
     if (total <= balance[broker.pair[0].second]){
         balance[broker.pair[0].second.available] -= total;
