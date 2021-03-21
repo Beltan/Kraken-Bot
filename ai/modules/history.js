@@ -1,12 +1,11 @@
 exports.dependencies = [];
 
+let data;
+
 exports.update = function(params) {
-
-    let values = params.values;
-
-    let decision = {};
-    return decision;
+    data.push(params);
+    return data;
 }
-
-exports.init = function(params) {
+exports.init = function() {
+    data = [];
 }

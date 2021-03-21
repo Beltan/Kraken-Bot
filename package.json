@@ -9,7 +9,8 @@
     "http": "*",
     "mathjs": "^9.2.0",
     "node-binance-api": "^0.12.4",
-    "socket.io": "*"
+    "socket.io": "*",
+    "winston": "^3.3.3"
   },
   "license": "MIT"
 }
