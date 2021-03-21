@@ -7,8 +7,9 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceRoot}/server.js"
+            "name": "Run Kraken",
+            "program": "${workspaceRoot}/server.js",
+            "outputCapture": "std"
         }
     ]
 }

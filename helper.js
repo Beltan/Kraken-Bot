@@ -1,5 +1,6 @@
 const config = require('./config').api;
 const Binance = require('node-binance-api');
+const logger = require('./logger').logger();
 const binance = new Binance().options({
     APIKEY: config.key,
     APISECRET: config.secret
@@ -19,7 +20,7 @@ exports.getHistoric = async function (pair, interval, options = {}) {
         let values = await binance.candlesticks(pair, interval, null, params);
         return values;
     } catch (e) {
-        console.log('Error while retrieving info, trying again... -> ' + e);
+        logger.error('Error while retrieving info, trying again... -> ' + e);
     }
 }
 

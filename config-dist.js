@@ -2,6 +2,7 @@ let api = {
     key: '', // API Key
     secret: '', // API Private Key
     simulation: true,
+    candles: ['5m'], // 5m, 1h, 1d
 }
 
 let broker = {
@@ -44,7 +45,12 @@ let ia = {
     modulesUsed: ["localMinMax"]
 }
 
+let logger = {
+    level: 'info'
+}
+
 module.exports.ia = ia;
 module.exports.api = api;
 module.exports.broker = broker;
-module.exports.simlation = simulation;
+module.exports.simulation = simulation;
+module.exports.logger = logger;

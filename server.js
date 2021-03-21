@@ -4,6 +4,9 @@ let app = express();
 let http = require('http').Server(app);
 app.use(express.static('public'));
 let io = require('socket.io')(http);
+const logs = require('./logger');
+logs.init();
+const logger = logs.logger();
 
 // Bot requires
 let launcher = require('./main');
@@ -13,7 +16,7 @@ let graph = require('./web/graphsData');
 
 // Server init
 http.listen(3000, function() {
-    console.log('listening on *:3000');
+    logger.info('Listening on *:3000');
 });
 
 // IO

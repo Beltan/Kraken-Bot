@@ -1,4 +1,6 @@
 const config = require('./../config').ia;
+const logger = require('./../logger').logger();
+const store = require('./../store');
 
 let modules = {};
 
@@ -12,7 +14,7 @@ for(let i in config.modulesUsed) {
     for(let j in mod.dependencies) {
         let dependency = mod.dependencies[j];
         if(!modules.hasOwnProperty(dependency)) {
-            console.log("Dependency " + dependency + " of module " + file + 
+           logger.error("Dependency " + dependency + " of module " + file + 
                 " is not present. Check correct order of dependencies.");
             process.exit(1);
         }
@@ -35,15 +37,16 @@ let call = function(obj, method, values, params = null) {
         return obj[method](values, params);
     }
     else {
-        console.log("Error calling method: " + method);
-        console.log("Method doesn't exists");
+        logger.error("Error calling method: " + method);
+        logger.error("Method doesn't exists");
         process.exit(1);
     }
 }
 
-let callInOrder = function(method, values = null) {
+let callInOrder = function(method, values = store) {
 
     let params = {};
+
     // for all the needed modules
     Object.keys(modules).forEach(function(moduleName) {
         let currentModule = modules[moduleName];

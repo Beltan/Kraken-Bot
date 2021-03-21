@@ -1,10 +1,10 @@
 let store = require('../store');
 const helper = require('../helper');
-const simexchange = require('./simulationExchange');
 const constants = require('../constants');
 const config = require('../config').api;
 const broker = require('../config').broker;
 const simulation = require('../config').simulation;
+const logger = require('../logger').logger();
 const Binance = require('node-binance-api');
 const math = require('mathjs');
 const binance = new Binance().options({
@@ -17,16 +17,16 @@ let balance = {};
 let rnd_id = 0;
 
 let updateOrders = function(){
-    let bid = math.min(Object.keys(store.depth.bids));
-    let ask = math.max(Object.keys(store.depth.asks));
-    for (let order in opernOrders){
-        if (order.type == 'buy' && order.price >= ask){
+    if(!store.bid || !store.ask) return;
+
+    for (let order in openOrders){
+        if (order.type == 'buy' && order.price >= store.ask){
             let total = math.multiply(decision.quantity, order.price); 
             balance[broker.pair[0].second.onOrder] -= total;
             balance[broker.pair[0].first.available] += decision.quantity;
             delete openOrders[order.txid];
         }
-        if (order.type == 'sell' && order.price <= bid){
+        if (order.type == 'sell' && order.price <= store.bid){
             let total = math.multiply(decision.quantity, order.price);
             balance[broker.pair[0].first.onOrder] -= decision.quantity;
             balance[broker.pair[0].second.available] += total;
@@ -42,14 +42,16 @@ exports.getValues = async function () {
 
     try {
         store.depth = await binance.depth(helper.getPair(broker.pair[0]));
+        store.bid = math.min(Object.keys(store.depth.bids));
+        store.ask = math.max(Object.keys(store.depth.asks));
         store.balance = balance;
         store.openorders = openOrders;
-        store.candles['5m'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '5m');
-        store.candles['1h'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1h');
-        store.candles['1d'] = await helper.getHistoric(helper.getPair(broker.pair[0]), '1d');
+        for(let candle in simulation.candles) {
+            store.candles[candle] = await helper.getHistoric(helper.getPair(broker.pair[0]), candle);
+        }
 
     } catch (e) {
-        console.log('Error while retrieving info, trying again... -> ' + e);
+        logger.error('Error while retrieving info, trying again... -> ' + e);
     }
 }
 
@@ -62,7 +64,7 @@ let placeBuy = async function(decision) {
         openOrders[rnd_id] = decision;
     }
     else{
-        console.log('Not enough funds to place this buy order');
+        logger.error('Not enough funds to place this buy order');
     }
 }
 
@@ -74,7 +76,7 @@ let placeSell = async function(decision) {
         openOrders[rnd_id] = decision;
     }
     else{
-        console.log('Not enough funds to place this sell order');
+        logger.error('Not enough funds to place this sell order');
     }
 }
 
@@ -86,7 +88,7 @@ let cancelOrder = async function(decision) {
         delete openOrders[txid];
     }
     else{
-        console.log('Error while placing ' + type + ', ' + type + ' not placed. Trying again... -> ' + e);
+        logger.error('Error while placing ' + type + ', ' + type + ' not placed. Trying again... -> ' + e);
     }
     return order;
 }
