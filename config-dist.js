@@ -39,17 +39,24 @@ let ia = {
 }
 */
 
-let ia = {
+let ai = {
     aiName: "null",
     managerName: "generic",
-    modulesUsed: ["localMinMax"]
+    modules: [
+        "localMinMax",
+        {
+        name: "localMinMax",
+        config: {
+            numberOfSamples: 1000
+        }
+    }]
 }
 
 let logger = {
-    level: 'info'
+    level: 'debug'
 }
 
-module.exports.ia = ia;
+module.exports.ai = ai;
 module.exports.api = api;
 module.exports.broker = broker;
 module.exports.simulation = simulation;

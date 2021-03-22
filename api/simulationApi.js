@@ -46,13 +46,16 @@ exports.getValues = async function () {
         store.ask = math.max(Object.keys(store.depth.asks));
         store.balance = balance;
         store.openorders = openOrders;
-        for(let candle in simulation.candles) {
+        for(let i in config.candles) {
+            const candle = config.candles[i];
             store.candles[candle] = await helper.getHistoric(helper.getPair(broker.pair[0]), candle);
         }
 
     } catch (e) {
         logger.error('Error while retrieving info, trying again... -> ' + e);
     }
+
+    return store;
 }
 
 let placeBuy = async function(decision) {

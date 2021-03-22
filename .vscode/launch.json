@@ -9,7 +9,11 @@
             "request": "launch",
             "name": "Run Kraken",
             "program": "${workspaceRoot}/server.js",
-            "outputCapture": "std"
+            "outputCapture": "std",
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
         }
     ]
 }

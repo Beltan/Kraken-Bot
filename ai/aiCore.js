@@ -1,11 +1,18 @@
-const config = require('./../config').ia;
+const config = require('./../config').ai;
 const logger = require('./../logger').logger();
-const store = require('./../store');
 
 let modules = {};
 
-for(let i in config.modulesUsed) {
-    let file = config.modulesUsed[i];
+for(let i in config.modules) {
+    let aimodule = config.modules[i];
+    if(typeof aimodule == "string") {
+        aimodule = {
+            name: aimodule,
+            config: {}
+        }
+    }
+
+    let file = aimodule.name;
 
     let mod = require("./modules/" + file);
     mod.name = file;
@@ -20,21 +27,27 @@ for(let i in config.modulesUsed) {
         }
     }
 
-    modules[file] = mod;
+    modules[aimodule.name] = {
+        mod: mod,
+        name: aimodule.name,
+        conf: aimodule.config
+    }
 };
 
-// ai name is mandatory 
+// ai name is mandatory
 let ai = require("./ais/" + config.aiName);
+let aiConfig = config.aiConfig ? config.aiConfig : {};
 
 // if there is a manager, load it
 let manager = null;
-if(config.hasOwnProperty("managerName") && config.managerName != "") {
+if(config.managerName) {
     manager = require("./managers/" + config.managerName);
 }
+let managerConfig = config.aiConfig ? config.aiConfig : {};
 
-let call = function(obj, method, values, params = null) {
+let call = function(obj, method, config = {}, params = null, values = null,) {
     if(method in obj) {
-        return obj[method](values, params);
+        return obj[method](config, params, values);
     }
     else {
         logger.error("Error calling method: " + method);
@@ -43,25 +56,25 @@ let call = function(obj, method, values, params = null) {
     }
 }
 
-let callInOrder = function(method, values = store) {
+let callInOrder = function(method, values = null) {
 
     let params = {};
 
     // for all the needed modules
     Object.keys(modules).forEach(function(moduleName) {
         let currentModule = modules[moduleName];
-        params[moduleName] = call(currentModule, method, values, params);
+        params[moduleName] = call(currentModule.mod, method, currentModule.conf, params, values);
     });
 
-    let decision = call(ai, method, values, params);
+    let decision = call(ai, method, values, params, aiConfig);
     params.decision = decision;
-    if(manager != null) decision = call(manager, method, params);
+    if(manager != null) decision = call(manager, method, managerConfig.conf, params);
     
     return decision;
 }
 
-exports.decide = function() {
-    return callInOrder("update");
+exports.decide = function(values) {
+    return callInOrder("update", values);
 }
 
 // init all modules

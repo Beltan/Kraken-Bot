@@ -1,6 +1,6 @@
 const constants = require('./../../constants');
 
-exports.update = function(modules) {
+exports.update = function(config, state, store) {
     // we return to standby
     return {type : constants.standBy};
 }

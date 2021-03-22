@@ -10,11 +10,7 @@ let constants = {
     pending: 'pending',
     closed: 'closed',
     canceled: 'canceled',
-    expired: 'expired',
-
-    fivemin: 300000,
-    onehour: 3600000,
-    oneday: 86400000
+    expired: 'expired'
 };
 
 module.exports = constants;
