@@ -4,7 +4,7 @@
   "description": "A kraken bot",
   "main": "server.js",
   "dependencies": {
-    "express": "^4.16.2",
+    "express": "^4.17.3",
     "fs": "*",
     "http": "*",
     "mathjs": "^9.2.0",
